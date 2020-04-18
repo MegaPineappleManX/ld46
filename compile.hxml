@@ -1,0 +1,5 @@
+-lib heaps 
+-js ld46.js
+-main Main
+-D windowSize=256x240
+-debug
