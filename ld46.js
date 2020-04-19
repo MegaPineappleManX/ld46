@@ -128,6 +128,18 @@ Lambda.array = function(it) {
 	}
 	return a;
 };
+Lambda.indexOf = function(it,v) {
+	var i = 0;
+	var v2 = $getIterator(it);
+	while(v2.hasNext()) {
+		var v21 = v2.next();
+		if(v == v21) {
+			return i;
+		}
+		++i;
+	}
+	return -1;
+};
 var h3d_IDrawable = function() { };
 $hxClasses["h3d.IDrawable"] = h3d_IDrawable;
 h3d_IDrawable.__name__ = "h3d.IDrawable";
@@ -304,26 +316,107 @@ Main.main = function() {
 Main.__super__ = hxd_App;
 Main.prototype = $extend(hxd_App.prototype,{
 	init: function() {
-		var _g = 0;
-		while(_g < 32) {
-			var i = _g++;
-			var _g1 = 0;
-			while(_g1 < 28) {
-				var j = _g1++;
-				var tile = h2d_Tile.fromColor((i + j) % 2 == 0 ? 2302755 : 1118481,16,16);
-				var bmp = new h2d_Bitmap(tile,this.s2d);
-				bmp.posChanged = true;
-				bmp.x = i * tile.width;
-				bmp.posChanged = true;
-				bmp.y = j * tile.height;
-			}
-		}
+		var file = haxe_Resource.getString("map");
+		var background = StringTools.trim(file.toString());
+		haxe_Log.trace(background,{ fileName : "Main.hx", lineNumber : 22, className : "Main", methodName : "init"});
+		haxe_Log.trace("Hello",{ fileName : "Main.hx", lineNumber : 23, className : "Main", methodName : "init"});
+		this.s2d.setFixedSize(512,448);
+		this.layer1 = new TileLayer(this.s2d,32,28);
+		this.layer1.initMap(background);
+		this.layer1.draw();
 	}
 	,update: function(float) {
 		DebugFPS.display(this.s2d);
 	}
 	,__class__: Main
 });
+var TileLayer = function(scene,w,h) {
+	this.blockColor = 40510;
+	this.plantDeadColor = 6113845;
+	this.plantDyingColor = 10523749;
+	this.plantWeedColor = 10515045;
+	this.plantHealthyColor = 589651;
+	this.grassColor = 2302755;
+	this.s2d = scene;
+	this.width = w;
+	this.height = h;
+	this.tiles = [];
+	this.tiles.length = this.width * this.height;
+};
+$hxClasses["TileLayer"] = TileLayer;
+TileLayer.__name__ = "TileLayer";
+TileLayer.prototype = {
+	getWidth: function() {
+		return this.width;
+	}
+	,getHeight: function() {
+		return this.height;
+	}
+	,getTile: function(x,y) {
+		return this.tiles[x + y * this.width];
+	}
+	,initMap: function(map) {
+		var startClip = 0;
+		var _g = 0;
+		var _g1 = this.height;
+		while(_g < _g1) {
+			var j = _g++;
+			var ma = map.substring(startClip,startClip + this.width);
+			startClip += this.width + 1;
+			var m = ma.split("");
+			var _g2 = 0;
+			var _g11 = this.width;
+			while(_g2 < _g11) {
+				var i = _g2++;
+				haxe_Log.trace(m[1],{ fileName : "Main.hx", lineNumber : 77, className : "TileLayer", methodName : "initMap"});
+				var color = 0;
+				switch(m[i]) {
+				case "0":
+					color = this.grassColor;
+					break;
+				case "1":
+					color = this.plantHealthyColor;
+					break;
+				case "2":
+					color = this.plantDyingColor;
+					break;
+				case "3":
+					color = this.plantDeadColor;
+					break;
+				case "4":
+					color = this.plantDeadColor;
+					break;
+				case "5":
+					color = this.plantDeadColor;
+					break;
+				default:
+					color = 16777215;
+				}
+				this.tiles[i + j * this.width] = h2d_Tile.fromColor(color,16,16);
+			}
+		}
+	}
+	,draw: function() {
+		var _g = 0;
+		var _g1 = this.getWidth();
+		while(_g < _g1) {
+			var i = _g++;
+			var _g2 = 0;
+			var _g11 = this.getHeight();
+			while(_g2 < _g11) {
+				var j = _g2++;
+				var bmp = new h2d_Bitmap(this.getTile(i,j),this.s2d);
+				var v = i * this.getTile(i,j).width;
+				bmp.posChanged = true;
+				bmp.x = v;
+				var v1 = j * this.getTile(i,j).height;
+				bmp.posChanged = true;
+				bmp.y = v1;
+			}
+		}
+	}
+	,__class__: TileLayer
+};
 var JTile = function() { };
 $hxClasses["JTile"] = JTile;
 JTile.__name__ = "JTile";
@@ -826,6 +919,16 @@ Xml.prototype = {
 			return true;
 		}
 		return false;
+	}
+	,insertChild: function(x,pos) {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) {
+			throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(this.nodeType));
+		}
+		if(x.parent != null) {
+			HxOverrides.remove(x.parent.children,x);
+		}
+		this.children.splice(pos,0,x);
+		x.parent = this;
 	}
 	,toString: function() {
 		return haxe_xml_Printer.print(this);
@@ -5433,6 +5536,479 @@ var h2d_BlendMode = $hxEnums["h2d.BlendMode"] = { __ename__ : true, __constructs
 	,Min: {_hx_index:11,__enum__:"h2d.BlendMode",toString:$estr}
 };
 h2d_BlendMode.__empty_constructs__ = [h2d_BlendMode.None,h2d_BlendMode.Alpha,h2d_BlendMode.Add,h2d_BlendMode.AlphaAdd,h2d_BlendMode.SoftAdd,h2d_BlendMode.Multiply,h2d_BlendMode.AlphaMultiply,h2d_BlendMode.Erase,h2d_BlendMode.Screen,h2d_BlendMode.Sub,h2d_BlendMode.Max,h2d_BlendMode.Min];
+var h2d_ConsoleArg = $hxEnums["h2d.ConsoleArg"] = { __ename__ : true, __constructs__ : ["AInt","AFloat","AString","ABool","AEnum"]
+	,AInt: {_hx_index:0,__enum__:"h2d.ConsoleArg",toString:$estr}
+	,AFloat: {_hx_index:1,__enum__:"h2d.ConsoleArg",toString:$estr}
+	,AString: {_hx_index:2,__enum__:"h2d.ConsoleArg",toString:$estr}
+	,ABool: {_hx_index:3,__enum__:"h2d.ConsoleArg",toString:$estr}
+	,AEnum: ($_=function(values) { return {_hx_index:4,values:values,__enum__:"h2d.ConsoleArg",toString:$estr}; },$_.__params__ = ["values"],$_)
+};
+h2d_ConsoleArg.__empty_constructs__ = [h2d_ConsoleArg.AInt,h2d_ConsoleArg.AFloat,h2d_ConsoleArg.AString,h2d_ConsoleArg.ABool];
+var h2d_Console = function(font,parent) {
+	this.autoComplete = true;
+	this.shortKeyChar = 47;
+	this.logDY = 0;
+	var _gthis = this;
+	h2d_Object.call(this,parent);
+	this.height = Math.ceil(font.lineHeight) + 2;
+	this.logTxt = new h2d_HtmlText(font,this);
+	var _this = this.logTxt;
+	_this.posChanged = true;
+	_this.x = 2;
+	this.logTxt.dropShadow = { dx : 0, dy : 1, color : 0, alpha : 0.5};
+	this.logTxt.set_visible(false);
+	this.logs = [];
+	this.logIndex = -1;
+	this.bg = new h2d_Bitmap(h2d_Tile.fromColor(0,1,1,0.5),this);
+	this.bg.set_visible(false);
+	this.hintTxt = new h2d_Text(font,this.bg);
+	var _this1 = this.hintTxt;
+	_this1.posChanged = true;
+	_this1.x = 2;
+	var _this2 = this.hintTxt;
+	_this2.posChanged = true;
+	_this2.y = 1;
+	this.hintTxt.set_textColor(-1);
+	this.hintTxt.alpha = 0.5;
+	this.tf = new h2d_TextInput(font,this.bg);
+	this.tf.onKeyDown = $bind(this,this.handleKey);
+	this.tf.onChange = $bind(this,this.handleCmdChange);
+	this.tf.onFocusLost = function(_) {
+		_gthis.hide();
+	};
+	var _this3 = this.tf;
+	_this3.posChanged = true;
+	_this3.x = 2;
+	var _this4 = this.tf;
+	_this4.posChanged = true;
+	_this4.y = 1;
+	this.tf.set_textColor(-1);
+	this.commands = new haxe_ds_StringMap();
+	this.aliases = new haxe_ds_StringMap();
+	this.addCommand("help","Show help",[{ name : "command", t : h2d_ConsoleArg.AString, opt : true}],$bind(this,this.showHelp));
+	this.addCommand("cls","Clear console",[],function() {
+		_gthis.logs = [];
+		_gthis.logTxt.set_text("");
+	});
+	this.addAlias("?","help");
+};
+$hxClasses["h2d.Console"] = h2d_Console;
+h2d_Console.__name__ = "h2d.Console";
+h2d_Console.__super__ = h2d_Object;
+h2d_Console.prototype = $extend(h2d_Object.prototype,{
+	addCommand: function(name,help,args,callb) {
+		var _this = this.commands;
+		var value = { help : help == null ? "" : help, args : args, callb : callb};
+		if(__map_reserved[name] != null) {
+			_this.setReserved(name,value);
+		} else {
+			_this.h[name] = value;
+		}
+	}
+	,addAlias: function(name,command) {
+		var _this = this.aliases;
+		if(__map_reserved[name] != null) {
+			_this.setReserved(name,command);
+		} else {
+			_this.h[name] = command;
+		}
+	}
+	,runCommand: function(commandLine) {
+		this.handleCommand(commandLine);
+	}
+	,onAdd: function() {
+		h2d_Object.prototype.onAdd.call(this);
+		this.getScene().window.addEventTarget($bind(this,this.onEvent));
+	}
+	,onRemove: function() {
+		this.getScene().window.removeEventTarget($bind(this,this.onEvent));
+		h2d_Object.prototype.onRemove.call(this);
+	}
+	,onEvent: function(e) {
+		switch(e.kind._hx_index) {
+		case 5:
+			if(this.logTxt.visible) {
+				this.logDY -= this.tf.font.lineHeight * e.wheelDelta * 3;
+				if(this.logDY < 0) {
+					this.logDY = 0;
+				}
+				if(this.logDY > this.logTxt.get_textHeight()) {
+					this.logDY = this.logTxt.get_textHeight();
+				}
+				e.propagate = false;
+			}
+			break;
+		case 11:
+			if(e.charCode == this.shortKeyChar && !this.bg.visible) {
+				this.show();
+			}
+			break;
+		default:
+		}
+	}
+	,showHelp: function(command) {
+		var _gthis = this;
+		var all;
+		if(command == null) {
+			all = Lambda.array({ iterator : function() {
+				return _gthis.commands.keys();
+			}});
+			all.sort(Reflect.compare);
+			HxOverrides.remove(all,"help");
+			all.push("help");
+		} else {
+			var _this = this.aliases;
+			if(__map_reserved[command] != null ? _this.existsReserved(command) : _this.h.hasOwnProperty(command)) {
+				var _this1 = this.aliases;
+				command = __map_reserved[command] != null ? _this1.getReserved(command) : _this1.h[command];
+			}
+			var _this2 = this.commands;
+			if(!(__map_reserved[command] != null ? _this2.existsReserved(command) : _this2.h.hasOwnProperty(command))) {
+				throw new js__$Boot_HaxeError("Command not found \"" + command + "\"");
+			}
+			all = [command];
+		}
+		var _g = 0;
+		while(_g < all.length) {
+			var cmdName = all[_g];
+			++_g;
+			var _this3 = this.commands;
+			var c = __map_reserved[cmdName] != null ? _this3.getReserved(cmdName) : _this3.h[cmdName];
+			var str = "/" + cmdName;
+			var a = this.aliases.keys();
+			while(a.hasNext()) {
+				var a1 = a.next();
+				var _this4 = this.aliases;
+				if((__map_reserved[a1] != null ? _this4.getReserved(a1) : _this4.h[a1]) == cmdName) {
+					str += "|" + a1;
+				}
+			}
+			var _g1 = 0;
+			var _g11 = c.args;
+			while(_g1 < _g11.length) {
+				var a2 = _g11[_g1];
+				++_g1;
+				var astr = a2.name;
+				var _g2 = a2.t;
+				switch(_g2._hx_index) {
+				case 0:case 1:
+					var e = a2.t;
+					astr += ":" + HxOverrides.substr($hxEnums[e.__enum__].__constructs__[e._hx_index],1,null);
+					break;
+				case 2:
+					break;
+				case 3:
+					astr += "=0|1";
+					break;
+				case 4:
+					var values = _g2.values;
+					astr += "=" + values.join("|");
+					break;
+				}
+				str += " " + (a2.opt ? "[" + astr + "]" : astr);
+			}
+			if(c.help != "") {
+				str += " : " + c.help;
+			}
+			this.log(str);
+		}
+	}
+	,isActive: function() {
+		return this.bg.visible;
+	}
+	,hide: function() {
+		this.bg.set_visible(false);
+		this.tf.set_text("");
+		this.hintTxt.set_text("");
+		this.tf.cursorIndex = -1;
+	}
+	,show: function() {
+		this.bg.set_visible(true);
+		this.tf.focus();
+		this.tf.cursorIndex = this.tf.text.length;
+		this.logIndex = -1;
+	}
+	,getCommandSuggestion: function(cmd) {
+		if(cmd == "") {
+			return "";
+		}
+		var closestCommand = "";
+		var commandNames = this.commands.keys();
+		var command = commandNames;
+		while(command.hasNext()) {
+			var command1 = command.next();
+			if(command1.indexOf(cmd) == 0) {
+				if(closestCommand == "" || closestCommand.length > command1.length) {
+					closestCommand = command1;
+				}
+			}
+		}
+		return closestCommand;
+	}
+	,handleKey: function(e) {
+		if(!this.bg.visible) {
+			return;
+		}
+		switch(e.keyCode) {
+		case 9:
+			if(this.autoComplete) {
+				if(this.hintTxt.text != "") {
+					this.tf.set_text(this.hintTxt.text + " ");
+					this.tf.cursorIndex = this.tf.text.length;
+				}
+			}
+			break;
+		case 13:case 108:
+			var cmd = this.tf.text;
+			this.tf.set_text("");
+			this.hintTxt.set_text("");
+			if(this.autoComplete) {
+				var suggestion = this.getCommandSuggestion(cmd);
+				if(suggestion != "") {
+					cmd = suggestion;
+				}
+			}
+			this.handleCommand(cmd);
+			if(!this.logTxt.visible) {
+				this.bg.set_visible(false);
+			}
+			e.cancel = true;
+			return;
+		case 27:
+			this.hide();
+			break;
+		case 38:
+			if(this.logs.length == 0 || this.logIndex == 0) {
+				return;
+			}
+			if(this.logIndex == -1) {
+				this.curCmd = this.tf.text;
+				this.logIndex = this.logs.length - 1;
+			} else {
+				this.logIndex--;
+			}
+			this.tf.set_text(this.logs[this.logIndex]);
+			this.tf.cursorIndex = this.tf.text.length;
+			break;
+		case 40:
+			if(this.tf.text == this.curCmd) {
+				return;
+			}
+			if(this.logIndex == this.logs.length - 1) {
+				this.tf.set_text(this.curCmd == null ? "" : this.curCmd);
+				this.tf.cursorIndex = this.tf.text.length;
+				this.logIndex = -1;
+				return;
+			}
+			this.logIndex++;
+			this.tf.set_text(this.logs[this.logIndex]);
+			this.tf.cursorIndex = this.tf.text.length;
+			break;
+		}
+	}
+	,handleCmdChange: function() {
+		this.hintTxt.set_visible(this.autoComplete);
+		if(this.autoComplete) {
+			this.hintTxt.set_text(this.getCommandSuggestion(this.tf.text));
+		} else {
+			this.hintTxt.set_text("");
+		}
+	}
+	,handleCommand: function(command) {
+		command = StringTools.trim(command);
+		if(HxOverrides.cca(command,0) == 47) {
+			command = HxOverrides.substr(command,1,null);
+		}
+		if(command == "") {
+			this.hide();
+			return;
+		}
+		this.logs.push(command);
+		this.logIndex = -1;
+		var errorColor = 12582912;
+		var args = [];
+		var c = "";
+		var i = 0;
+		var readString = function(endChar) {
+			var string = "";
+			while(i < command.length) {
+				var c1 = i += 1;
+				c = command.charAt(c1);
+				if(c == endChar) {
+					i += 1;
+					return string;
+				}
+				string += c;
+			}
+			return null;
+		};
+		var last = "";
+		while(i < command.length) {
+			c = command.charAt(i);
+			switch(c) {
+			case "\t":case " ":
+				c = command.charAt(i);
+				while(c == " " || c == "\t") {
+					var c2 = i += 1;
+					c = command.charAt(c2);
+				}
+				i -= 1;
+				args.push(last);
+				last = "";
+				break;
+			case "\"":case "'":
+				var string1 = readString(c);
+				if(string1 == null) {
+					this.log("Bad formated string",errorColor);
+					return;
+				}
+				args.push(string1);
+				last = "";
+				c = command.charAt(i);
+				while(c == " " || c == "\t") {
+					var c3 = i += 1;
+					c = command.charAt(c3);
+				}
+				i -= 1;
+				break;
+			default:
+				last += c;
+			}
+			i += 1;
+		}
+		args.push(last);
+		var cmdName = args[0];
+		var _this = this.aliases;
+		if(__map_reserved[cmdName] != null ? _this.existsReserved(cmdName) : _this.h.hasOwnProperty(cmdName)) {
+			var _this1 = this.aliases;
+			cmdName = __map_reserved[cmdName] != null ? _this1.getReserved(cmdName) : _this1.h[cmdName];
+		}
+		var _this2 = this.commands;
+		var cmd = __map_reserved[cmdName] != null ? _this2.getReserved(cmdName) : _this2.h[cmdName];
+		if(cmd == null) {
+			this.log("Unknown command \"" + cmdName + "\"",errorColor);
+			return;
+		}
+		var vargs = [];
+		var _g = 0;
+		var _g1 = cmd.args.length;
+		while(_g < _g1) {
+			var i1 = _g++;
+			var a = cmd.args[i1];
+			var v = args[i1 + 1];
+			if(v == null) {
+				if(a.opt) {
+					vargs.push(null);
+					continue;
+				}
+				this.log("Missing argument " + a.name,errorColor);
+				return;
+			}
+			var _g2 = a.t;
+			switch(_g2._hx_index) {
+			case 0:
+				var i2 = Std.parseInt(v);
+				if(i2 == null) {
+					this.log("" + v + " should be Int for argument " + a.name,errorColor);
+					return;
+				}
+				vargs.push(i2);
+				break;
+			case 1:
+				var f = parseFloat(v);
+				if(isNaN(f)) {
+					this.log("" + v + " should be Float for argument " + a.name,errorColor);
+					return;
+				}
+				vargs.push(f);
+				break;
+			case 2:
+				vargs.push(cmd.args.length == 1 ? StringTools.trim(HxOverrides.substr(command,args[0].length,null)) : v);
+				break;
+			case 3:
+				switch(v) {
+				case "1":case "true":
+					vargs.push(true);
+					break;
+				case "0":case "false":
+					vargs.push(false);
+					break;
+				default:
+					this.log("" + v + " should be Bool for argument " + a.name,errorColor);
+					return;
+				}
+				break;
+			case 4:
+				var values = _g2.values;
+				var found = false;
+				var _g3 = 0;
+				while(_g3 < values.length) {
+					var v2 = values[_g3];
+					++_g3;
+					if(v == v2) {
+						found = true;
+						vargs.push(v2);
+					}
+				}
+				if(!found) {
+					this.log("" + v + " should be [" + values.join("|") + "] for argument " + a.name,errorColor);
+					return;
+				}
+				break;
+			}
+		}
+		try {
+			cmd.callb.apply(null,vargs);
+		} catch( e ) {
+			var e1 = ((e) instanceof js__$Boot_HaxeError) ? e.val : e;
+			if(typeof(e1) == "string") {
+				this.log("ERROR " + e1,errorColor);
+			} else {
+				throw e;
+			}
+		}
+	}
+	,log: function(text,color) {
+		if(color == null) {
+			color = this.tf.textColor;
+		}
+		var oldH = this.logTxt.get_textHeight();
+		this.logTxt.set_text(this.logTxt.text + ("<font color=\"#" + StringTools.hex(color & 16777215,6) + "\">" + StringTools.htmlEscape(text) + "</font><br/>"));
+		if(this.logDY != 0) {
+			this.logDY += this.logTxt.get_textHeight() - oldH;
+		}
+		this.logTxt.alpha = 1;
+		this.logTxt.set_visible(true);
+		this.lastLogTime = Date.now() / 1000;
+	}
+	,sync: function(ctx) {
+		var scene = ctx.scene;
+		if(scene != null) {
+			this.posChanged = true;
+			this.x = 0;
+			this.posChanged = true;
+			this.y = scene.height - this.height;
+			this.width = scene.width;
+			this.tf.set_maxWidth(this.width);
+			this.bg.tile.scaleToSize(this.width,this.height);
+		}
+		var log = this.logTxt;
+		if(log.visible) {
+			var v = this.bg.y - log.get_textHeight() + this.logDY;
+			log.posChanged = true;
+			log.y = v;
+			var dt = Date.now() / 1000 - this.lastLogTime;
+			if(dt > h2d_Console.HIDE_LOG_TIMEOUT && !this.bg.visible) {
+				log.alpha -= ctx.elapsedTime * 4;
+				if(log.alpha <= 0) {
+					log.set_visible(false);
+				}
+			}
+		}
+		h2d_Object.prototype.sync.call(this,ctx);
+	}
+	,__class__: h2d_Console
+});
 var h2d_Kerning = function(c,o) {
 	this.prevChar = c;
 	this.offset = o;
@@ -5579,6 +6155,1594 @@ h2d_Font.prototype = {
 	}
 	,__class__: h2d_Font
 };
+var h2d_LineHeightMode = $hxEnums["h2d.LineHeightMode"] = { __ename__ : true, __constructs__ : ["Accurate","TextOnly","Constant"]
+	,Accurate: {_hx_index:0,__enum__:"h2d.LineHeightMode",toString:$estr}
+	,TextOnly: {_hx_index:1,__enum__:"h2d.LineHeightMode",toString:$estr}
+	,Constant: {_hx_index:2,__enum__:"h2d.LineHeightMode",toString:$estr}
+};
+h2d_LineHeightMode.__empty_constructs__ = [h2d_LineHeightMode.Accurate,h2d_LineHeightMode.TextOnly,h2d_LineHeightMode.Constant];
+var h2d_Text = function(font,parent) {
+	this.realMaxWidth = -1;
+	this.constraintWidth = -1;
+	h2d_Drawable.call(this,parent);
+	this.set_font(font);
+	this.set_textAlign(h2d_Align.Left);
+	this.set_letterSpacing(1);
+	this.set_lineSpacing(0);
+	this.set_text("");
+	this.currentText = "";
+	this.set_textColor(16777215);
+};
+$hxClasses["h2d.Text"] = h2d_Text;
+h2d_Text.__name__ = "h2d.Text";
+h2d_Text.__super__ = h2d_Drawable;
+h2d_Text.prototype = $extend(h2d_Drawable.prototype,{
+	set_font: function(font) {
+		if(this.font == font) {
+			return font;
+		}
+		this.font = font;
+		if(font != null) {
+			var _g = font.type;
+			switch(_g._hx_index) {
+			case 0:
+				if(this.sdfShader != null) {
+					this.removeShader(this.sdfShader);
+					this.sdfShader = null;
+				}
+				break;
+			case 1:
+				var smoothing = _g.smoothing;
+				var alphaCutoff = _g.alphaCutoff;
+				var channel = _g.channel;
+				if(this.sdfShader == null) {
+					this.sdfShader = new h3d_shader_SignedDistanceField();
+					this.addShader(this.sdfShader);
+				}
+				this.sdfShader.alphaCutoff__ = alphaCutoff;
+				this.sdfShader.smoothing__ = smoothing;
+				var _this = this.sdfShader;
+				_this.constModified = true;
+				_this.channel__ = channel;
+				break;
+			}
+		}
+		if(this.glyphs != null) {
+			var _this1 = this.glyphs;
+			if(_this1 != null && _this1.parent != null) {
+				_this1.parent.removeChild(_this1);
+			}
+		}
+		this.glyphs = new h2d_TileGroup(font == null ? null : font.tile,this);
+		this.glyphs.set_visible(false);
+		this.rebuild();
+		return font;
+	}
+	,set_textAlign: function(a) {
+		if(this.textAlign == a) {
+			return a;
+		}
+		this.textAlign = a;
+		this.rebuild();
+		return a;
+	}
+	,set_letterSpacing: function(s) {
+		if(this.letterSpacing == s) {
+			return s;
+		}
+		this.letterSpacing = s;
+		this.rebuild();
+		return s;
+	}
+	,set_lineSpacing: function(s) {
+		if(this.lineSpacing == s) {
+			return s;
+		}
+		this.lineSpacing = s;
+		this.rebuild();
+		return s;
+	}
+	,constraintSize: function(width,height) {
+		this.constraintWidth = width;
+		this.updateConstraint();
+	}
+	,onAdd: function() {
+		h2d_Drawable.prototype.onAdd.call(this);
+		this.rebuild();
+	}
+	,checkText: function() {
+		if(this.textChanged && this.text != this.currentText) {
+			this.textChanged = false;
+			this.currentText = this.text;
+			this.calcDone = false;
+			this.needsRebuild = true;
+		}
+	}
+	,sync: function(ctx) {
+		h2d_Drawable.prototype.sync.call(this,ctx);
+		if(this.textChanged && this.text != this.currentText) {
+			this.textChanged = false;
+			this.currentText = this.text;
+			this.calcDone = false;
+			this.needsRebuild = true;
+		}
+		if(this.needsRebuild) {
+			this.initGlyphs(this.currentText);
+		}
+	}
+	,draw: function(ctx) {
+		if(this.glyphs == null) {
+			this.emitTile(ctx,h2d_Tile.fromColor(16711935,16,16));
+			return;
+		}
+		if(this.textChanged && this.text != this.currentText) {
+			this.textChanged = false;
+			this.currentText = this.text;
+			this.calcDone = false;
+			this.needsRebuild = true;
+		}
+		if(this.needsRebuild) {
+			this.initGlyphs(this.currentText);
+		}
+		if(this.dropShadow != null) {
+			var oldX = this.absX;
+			var oldY = this.absY;
+			this.absX += this.dropShadow.dx * this.matA + this.dropShadow.dy * this.matC;
+			this.absY += this.dropShadow.dx * this.matB + this.dropShadow.dy * this.matD;
+			var oldR = this.color.x;
+			var oldG = this.color.y;
+			var oldB = this.color.z;
+			var oldA = this.color.w;
+			var _this = this.color;
+			var c = this.dropShadow.color;
+			_this.x = (c >> 16 & 255) / 255;
+			_this.y = (c >> 8 & 255) / 255;
+			_this.z = (c & 255) / 255;
+			_this.w = (c >>> 24) / 255;
+			this.color.w = this.dropShadow.alpha * oldA;
+			this.glyphs.drawWith(ctx,this);
+			this.absX = oldX;
+			this.absY = oldY;
+			var _this1 = this.color;
+			var x = oldR;
+			var y = oldG;
+			var z = oldB;
+			var w = oldA;
+			if(w == null) {
+				w = 1.;
+			}
+			if(z == null) {
+				z = 0.;
+			}
+			if(y == null) {
+				y = 0.;
+			}
+			if(x == null) {
+				x = 0.;
+			}
+			_this1.x = x;
+			_this1.y = y;
+			_this1.z = z;
+			_this1.w = w;
+		}
+		this.glyphs.drawWith(ctx,this);
+	}
+	,set_text: function(t) {
+		var t1 = t == null ? "null" : t;
+		if(t1 == this.text) {
+			return t1;
+		}
+		this.text = t1;
+		this.textChanged = true;
+		this.validateText();
+		if(this.parentContainer != null) {
+			this.parentContainer.contentChanged(this);
+		}
+		return t1;
+	}
+	,validateText: function() {
+	}
+	,rebuild: function() {
+		this.calcDone = false;
+		this.needsRebuild = true;
+		if(this.parentContainer != null) {
+			this.parentContainer.contentChanged(this);
+		}
+	}
+	,calcTextWidth: function(text) {
+		if(this.calcDone) {
+			var ow = this.calcWidth;
+			var oh = this.calcHeight;
+			var osh = this.calcSizeHeight;
+			var ox = this.calcXMin;
+			var oy = this.calcYMin;
+			this.initGlyphs(text,false);
+			var w = this.calcWidth;
+			this.calcWidth = ow;
+			this.calcHeight = oh;
+			this.calcSizeHeight = osh;
+			this.calcXMin = ox;
+			this.calcYMin = oy;
+			return w;
+		} else {
+			this.initGlyphs(text,false);
+			this.calcDone = false;
+			return this.calcWidth;
+		}
+	}
+	,splitText: function(text) {
+		return this.splitRawText(text,0,0);
+	}
+	,splitRawText: function(text,leftMargin,afterData,font,sizes,prevChar) {
+		if(prevChar == null) {
+			prevChar = -1;
+		}
+		if(afterData == null) {
+			afterData = 0.;
+		}
+		if(leftMargin == null) {
+			leftMargin = 0.;
+		}
+		var maxWidth = this.realMaxWidth;
+		if(maxWidth < 0) {
+			if(sizes == null) {
+				return text;
+			} else {
+				maxWidth = Infinity;
+			}
+		}
+		if(font == null) {
+			font = this.font;
+		}
+		var lines = [];
+		var restPos = 0;
+		var x = leftMargin;
+		var _g = 0;
+		var _g1 = text.length;
+		while(_g < _g1) {
+			var i = _g++;
+			var cc = HxOverrides.cca(text,i);
+			var c = font.glyphs.h[cc];
+			if(c == null) {
+				c = font.charset.resolveChar(cc,font.glyphs);
+				if(c == null) {
+					c = cc == 13 || cc == 10 ? font.nullChar : font.defaultChar;
+				}
+			}
+			var e = c;
+			var newline = cc == 10;
+			var esize = e.width + e.getKerningOffset(prevChar);
+			if(font.charset.isBreakChar(cc)) {
+				if(lines.length == 0 && leftMargin > 0 && x > maxWidth) {
+					lines.push("");
+					if(sizes != null) {
+						sizes.push(leftMargin);
+					}
+					x -= leftMargin;
+				}
+				var size = x + esize + this.letterSpacing;
+				var k = i + 1;
+				var max = text.length;
+				var prevChar1 = prevChar;
+				var breakFound = false;
+				while(size <= maxWidth && k < max) {
+					var cc1 = HxOverrides.cca(text,k++);
+					if(font.charset.isSpace(cc1) || cc1 == 10) {
+						breakFound = true;
+						break;
+					}
+					var c1 = font.glyphs.h[cc1];
+					if(c1 == null) {
+						c1 = font.charset.resolveChar(cc1,font.glyphs);
+						if(c1 == null) {
+							c1 = cc1 == 13 || cc1 == 10 ? font.nullChar : font.defaultChar;
+						}
+					}
+					var e1 = c1;
+					size += e1.width + this.letterSpacing + e1.getKerningOffset(prevChar1);
+					prevChar1 = cc1;
+					if(font.charset.isBreakChar(cc1)) {
+						break;
+					}
+				}
+				if(size > maxWidth || !breakFound && size + afterData > maxWidth) {
+					newline = true;
+					if(font.charset.isSpace(cc)) {
+						lines.push(HxOverrides.substr(text,restPos,i - restPos));
+						e = null;
+					} else {
+						lines.push(HxOverrides.substr(text,restPos,i + 1 - restPos));
+					}
+					restPos = i + 1;
+				}
+			}
+			if(e != null && cc != 10) {
+				x += esize + this.letterSpacing;
+			}
+			if(newline) {
+				if(sizes != null) {
+					sizes.push(x);
+				}
+				x = 0;
+				prevChar = -1;
+			} else {
+				prevChar = cc;
+			}
+		}
+		if(restPos < text.length) {
+			if(lines.length == 0 && leftMargin > 0 && x + afterData - this.letterSpacing > maxWidth) {
+				lines.push("");
+				if(sizes != null) {
+					sizes.push(leftMargin);
+				}
+				x -= leftMargin;
+			}
+			lines.push(HxOverrides.substr(text,restPos,text.length - restPos));
+			if(sizes != null) {
+				sizes.push(x);
+			}
+		}
+		return lines.join("\n");
+	}
+	,getTextProgress: function(text,progress) {
+		if(progress >= text.length) {
+			return text;
+		}
+		return HxOverrides.substr(text,0,progress | 0);
+	}
+	,initGlyphs: function(text,rebuild) {
+		if(rebuild == null) {
+			rebuild = true;
+		}
+		if(rebuild) {
+			this.glyphs.clear();
+		}
+		var x = 0.;
+		var y = 0.;
+		var xMax = 0.;
+		var xMin = 0.;
+		var yMin = 0.;
+		var prevChar = -1;
+		var linei = 0;
+		var align = this.textAlign;
+		var lines = [];
+		var dl = this.font.lineHeight + this.lineSpacing;
+		var t = this.splitRawText(text,0,0,null,lines);
+		var _g = 0;
+		while(_g < lines.length) {
+			var lw = lines[_g];
+			++_g;
+			if(lw > x) {
+				x = lw;
+			}
+		}
+		this.calcWidth = x;
+		switch(align._hx_index) {
+		case 0:
+			x = 0;
+			break;
+		case 1:case 2:case 3:case 4:
+			var max = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(this.calcWidth) : this.realMaxWidth < 0 ? 0 : Math.ceil(this.realMaxWidth);
+			var k = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
+			var _g1 = 0;
+			var _g2 = lines.length;
+			while(_g1 < _g2) {
+				var i = _g1++;
+				lines[i] = Math.floor((max - lines[i]) * k);
+			}
+			x = lines[0];
+			xMin = x;
+			break;
+		}
+		var _g11 = 0;
+		var _g21 = t.length;
+		while(_g11 < _g21) {
+			var i1 = _g11++;
+			var cc = HxOverrides.cca(t,i1);
+			var _this = this.font;
+			var c = _this.glyphs.h[cc];
+			if(c == null) {
+				c = _this.charset.resolveChar(cc,_this.glyphs);
+				if(c == null) {
+					c = cc == 13 || cc == 10 ? _this.nullChar : _this.defaultChar;
+				}
+			}
+			var e = c;
+			var offs = e.getKerningOffset(prevChar);
+			var esize = e.width + offs;
+			if(cc == 10) {
+				if(x > xMax) {
+					xMax = x;
+				}
+				switch(align._hx_index) {
+				case 0:
+					x = 0;
+					break;
+				case 1:case 2:case 3:case 4:
+					x = lines[++linei];
+					if(x < xMin) {
+						xMin = x;
+					}
+					break;
+				}
+				y += dl;
+				prevChar = -1;
+			} else {
+				if(e != null) {
+					if(rebuild) {
+						var _this1 = this.glyphs;
+						_this1.content.add(x + offs,y,_this1.curColor.x,_this1.curColor.y,_this1.curColor.z,_this1.curColor.w,e.t);
+					}
+					if(y == 0 && e.t.dy < yMin) {
+						yMin = e.t.dy;
+					}
+					x += esize + this.letterSpacing;
+				}
+				prevChar = cc;
+			}
+		}
+		if(x > xMax) {
+			xMax = x;
+		}
+		this.calcXMin = xMin;
+		this.calcYMin = yMin;
+		this.calcWidth = xMax - xMin;
+		this.calcHeight = y + this.font.lineHeight;
+		this.calcSizeHeight = y + (this.font.baseLine > 0 ? this.font.baseLine : this.font.lineHeight);
+		this.calcDone = true;
+		if(rebuild) {
+			this.needsRebuild = false;
+		}
+	}
+	,updateSize: function() {
+		if(this.textChanged && this.text != this.currentText) {
+			this.textChanged = false;
+			this.currentText = this.text;
+			this.calcDone = false;
+			this.needsRebuild = true;
+		}
+		if(!this.calcDone) {
+			this.initGlyphs(this.text,this.needsRebuild);
+		}
+	}
+	,get_textHeight: function() {
+		if(this.textChanged && this.text != this.currentText) {
+			this.textChanged = false;
+			this.currentText = this.text;
+			this.calcDone = false;
+			this.needsRebuild = true;
+		}
+		if(!this.calcDone) {
+			this.initGlyphs(this.text,this.needsRebuild);
+		}
+		return this.calcHeight;
+	}
+	,get_textWidth: function() {
+		if(this.textChanged && this.text != this.currentText) {
+			this.textChanged = false;
+			this.currentText = this.text;
+			this.calcDone = false;
+			this.needsRebuild = true;
+		}
+		if(!this.calcDone) {
+			this.initGlyphs(this.text,this.needsRebuild);
+		}
+		return this.calcWidth;
+	}
+	,set_maxWidth: function(w) {
+		if(this.maxWidth == w) {
+			return w;
+		}
+		this.maxWidth = w;
+		this.updateConstraint();
+		return w;
+	}
+	,updateConstraint: function() {
+		var old = this.realMaxWidth;
+		if(this.maxWidth == null) {
+			this.realMaxWidth = this.constraintWidth;
+		} else if(this.constraintWidth < 0) {
+			this.realMaxWidth = this.maxWidth;
+		} else {
+			var a = this.maxWidth;
+			var b = this.constraintWidth;
+			this.realMaxWidth = a > b ? b : a;
+		}
+		if(this.realMaxWidth != old) {
+			this.rebuild();
+		}
+	}
+	,set_textColor: function(c) {
+		if(this.textColor == c) {
+			return c;
+		}
+		this.textColor = c;
+		var a = this.color.w;
+		var _this = this.color;
+		_this.x = (c >> 16 & 255) / 255;
+		_this.y = (c >> 8 & 255) / 255;
+		_this.z = (c & 255) / 255;
+		_this.w = (c >>> 24) / 255;
+		this.color.w = a;
+		return c;
+	}
+	,getBoundsRec: function(relativeTo,out,forSize) {
+		h2d_Drawable.prototype.getBoundsRec.call(this,relativeTo,out,forSize);
+		if(this.textChanged && this.text != this.currentText) {
+			this.textChanged = false;
+			this.currentText = this.text;
+			this.calcDone = false;
+			this.needsRebuild = true;
+		}
+		if(!this.calcDone) {
+			this.initGlyphs(this.text,this.needsRebuild);
+		}
+		var x;
+		var y;
+		var w;
+		var h;
+		if(forSize) {
+			x = this.calcXMin;
+			y = 0.;
+			w = this.calcWidth;
+			h = this.calcSizeHeight;
+		} else {
+			x = this.calcXMin;
+			y = this.calcYMin;
+			w = this.calcWidth;
+			h = this.calcHeight - this.calcYMin;
+		}
+		this.addBounds(relativeTo,out,x,y,w,h);
+	}
+	,__class__: h2d_Text
+});
+var h2d_HtmlText = function(font,parent) {
+	this.elements = [];
+	this.lineHeightMode = h2d_LineHeightMode.Accurate;
+	this.condenseWhite = true;
+	h2d_Text.call(this,font,parent);
+};
+$hxClasses["h2d.HtmlText"] = h2d_HtmlText;
+h2d_HtmlText.__name__ = "h2d.HtmlText";
+h2d_HtmlText.defaultLoadImage = function(url) {
+	return null;
+};
+h2d_HtmlText.defaultLoadFont = function(name) {
+	return null;
+};
+h2d_HtmlText.defaultFormatText = function(text) {
+	return text;
+};
+h2d_HtmlText.__super__ = h2d_Text;
+h2d_HtmlText.prototype = $extend(h2d_Text.prototype,{
+	draw: function(ctx) {
+		if(this.dropShadow != null) {
+			var oldX = this.absX;
+			var oldY = this.absY;
+			this.absX += this.dropShadow.dx * this.matA + this.dropShadow.dy * this.matC;
+			this.absY += this.dropShadow.dx * this.matB + this.dropShadow.dy * this.matD;
+			if(this.dropMatrix == null) {
+				this.dropMatrix = new h3d_shader_ColorMatrix();
+			}
+			this.addShader(this.dropMatrix);
+			var m = this.dropMatrix.matrix__;
+			m.zero();
+			m._41 = (this.dropShadow.color >> 16 & 255) / 255;
+			m._42 = (this.dropShadow.color >> 8 & 255) / 255;
+			m._43 = (this.dropShadow.color & 255) / 255;
+			m._44 = this.dropShadow.alpha;
+			this.glyphs.drawWith(ctx,this);
+			this.removeShader(this.dropMatrix);
+			this.absX = oldX;
+			this.absY = oldY;
+		} else {
+			this.dropMatrix = null;
+		}
+		this.glyphs.drawWith(ctx,this);
+	}
+	,loadImage: function(url) {
+		return h2d_HtmlText.defaultLoadImage(url);
+	}
+	,loadFont: function(name) {
+		var f = h2d_HtmlText.defaultLoadFont(name);
+		if(f == null) {
+			return this.font;
+		} else {
+			return f;
+		}
+	}
+	,formatText: function(text) {
+		return h2d_HtmlText.defaultFormatText(text);
+	}
+	,set_text: function(t) {
+		h2d_Text.prototype.set_text.call(this,this.formatText(t));
+		return t;
+	}
+	,parseText: function(text) {
+		try {
+			return Xml.parse(text);
+		} catch( e ) {
+			throw new js__$Boot_HaxeError("Could not parse " + text + " (" + Std.string(((e) instanceof js__$Boot_HaxeError) ? e.val : e) + ")");
+		}
+	}
+	,makeLineInfo: function(width,height,baseLine) {
+		return { width : width, height : height, baseLine : baseLine};
+	}
+	,validateText: function() {
+		this.textXml = this.parseText(this.text);
+		this.validateNodes(this.textXml);
+	}
+	,validateNodes: function(xml) {
+		if(xml.nodeType == 0) {
+			if(xml.nodeType != Xml.Element) {
+				throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + _$Xml_XmlType_$Impl_$.toString(xml.nodeType));
+			}
+			var nodeName = xml.nodeName.toLowerCase();
+			switch(nodeName) {
+			case "b":case "bold":
+				this.loadFont("bold");
+				break;
+			case "font":
+				if(xml.exists("face")) {
+					this.loadFont(xml.get("face"));
+				}
+				break;
+			case "img":
+				this.loadImage(xml.get("src"));
+				break;
+			case "i":case "italic":
+				this.loadFont("italic");
+				break;
+			}
+			if(xml.nodeType != Xml.Document && xml.nodeType != Xml.Element) {
+				throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(xml.nodeType));
+			}
+			var child = HxOverrides.iter(xml.children);
+			while(child.hasNext()) {
+				var child1 = child.next();
+				this.validateNodes(xml);
+			}
+		}
+	}
+	,initGlyphs: function(text,rebuild) {
+		if(rebuild == null) {
+			rebuild = true;
+		}
+		if(rebuild) {
+			this.glyphs.clear();
+			var _g = 0;
+			var _g1 = this.elements;
+			while(_g < _g1.length) {
+				var e = _g1[_g];
+				++_g;
+				if(e != null && e.parent != null) {
+					e.parent.removeChild(e);
+				}
+			}
+			this.elements = [];
+		}
+		this.glyphs.setDefaultColor(this.textColor);
+		var doc;
+		if(this.textXml == null) {
+			doc = this.parseText(text);
+		} else {
+			doc = this.textXml;
+		}
+		this.yPos = 0;
+		this.xMax = 0;
+		this.xMin = Infinity;
+		this.sizePos = 0;
+		this.calcYMin = 0;
+		var metrics = [{ width : 0, height : this.font.lineHeight, baseLine : this.font.baseLine}];
+		this.prevChar = -1;
+		this.newLine = true;
+		var splitNode = { node : null, pos : 0, font : this.font, prevChar : -1, width : 0, height : 0, baseLine : 0};
+		if(doc.nodeType != Xml.Document && doc.nodeType != Xml.Element) {
+			throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(doc.nodeType));
+		}
+		var e1 = HxOverrides.iter(doc.children);
+		while(e1.hasNext()) {
+			var e2 = e1.next();
+			this.buildSizes(e2,this.font,metrics,splitNode);
+		}
+		var max = 0.;
+		var _g2 = 0;
+		while(_g2 < metrics.length) {
+			var info = metrics[_g2];
+			++_g2;
+			if(info.width > max) {
+				max = info.width;
+			}
+		}
+		this.calcWidth = max;
+		this.prevChar = -1;
+		this.newLine = true;
+		var align = this.textAlign;
+		var size = metrics[0].width;
+		switch(align._hx_index) {
+		case 0:
+			this.xPos = 0;
+			if(this.xMin > 0) {
+				this.xMin = 0;
+			}
+			break;
+		case 1:case 2:case 3:case 4:
+			var max1 = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(this.calcWidth) : this.calcWidth < 0 ? 0 : Math.ceil(this.realMaxWidth);
+			var k = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
+			this.xPos = Math.floor((max1 - size) * k);
+			if(this.xPos < this.xMin) {
+				this.xMin = this.xPos;
+			}
+			break;
+		}
+		if(doc.nodeType != Xml.Document && doc.nodeType != Xml.Element) {
+			throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(doc.nodeType));
+		}
+		var e3 = HxOverrides.iter(doc.children);
+		while(e3.hasNext()) {
+			var e4 = e3.next();
+			this.addNode(e4,this.font,this.textAlign,rebuild,metrics);
+		}
+		if(this.xPos > this.xMax) {
+			this.xMax = this.xPos;
+		}
+		this.textXml = null;
+		var y = this.yPos;
+		this.calcXMin = this.xMin;
+		this.calcWidth = this.xMax - this.xMin;
+		this.calcHeight = y + metrics[this.sizePos].height;
+		this.calcSizeHeight = y + metrics[this.sizePos].baseLine;
+		this.calcDone = true;
+		if(rebuild) {
+			this.needsRebuild = false;
+		}
+	}
+	,buildSizes: function(e,font,metrics,splitNode) {
+		var _gthis = this;
+		var wordSplit = function() {
+			var fnt = splitNode.font;
+			var _this = splitNode.node;
+			if(_this.nodeType == Xml.Document || _this.nodeType == Xml.Element) {
+				throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(_this.nodeType));
+			}
+			var str = _this.nodeValue;
+			var info = metrics[metrics.length - 1];
+			var w = info.width;
+			var cc = HxOverrides.cca(str,splitNode.pos);
+			info.width = splitNode.width;
+			info.height = splitNode.height;
+			info.baseLine = splitNode.baseLine;
+			var c = fnt.glyphs.h[cc];
+			if(c == null) {
+				c = fnt.charset.resolveChar(cc,fnt.glyphs);
+				if(c == null) {
+					c = cc == 13 || cc == 10 ? fnt.nullChar : fnt.defaultChar;
+				}
+			}
+			var char = c;
+			if(fnt.charset.isSpace(cc)) {
+				w -= splitNode.width + _gthis.letterSpacing + char.width + char.getKerningOffset(splitNode.prevChar);
+				var _this1 = splitNode.node;
+				var v = HxOverrides.substr(str,0,splitNode.pos) + "\n" + HxOverrides.substr(str,splitNode.pos + 1,null);
+				if(_this1.nodeType == Xml.Document || _this1.nodeType == Xml.Element) {
+					throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(_this1.nodeType));
+				}
+				_this1.nodeValue = v;
+			} else {
+				w -= splitNode.width + _gthis.letterSpacing + char.getKerningOffset(splitNode.prevChar);
+				var _this2 = splitNode.node;
+				var v1 = HxOverrides.substr(str,0,splitNode.pos + 1) + "\n" + HxOverrides.substr(str,splitNode.pos + 1,null);
+				if(_this2.nodeType == Xml.Document || _this2.nodeType == Xml.Element) {
+					throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(_this2.nodeType));
+				}
+				_this2.nodeValue = v1;
+			}
+			splitNode.node = null;
+			return w;
+		};
+		if(e.nodeType == Xml.Element) {
+			if(e.nodeType != Xml.Element) {
+				throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+			}
+			var nodeName = e.nodeName.toLowerCase();
+			switch(nodeName) {
+			case "b":case "bold":
+				font = this.loadFont("bold");
+				break;
+			case "br":
+				var fontInfo = _gthis.lineHeightMode == h2d_LineHeightMode.Constant ? _gthis.font : font;
+				metrics.push({ width : 0, height : fontInfo.lineHeight, baseLine : fontInfo.baseLine});
+				splitNode.node = null;
+				_gthis.newLine = true;
+				_gthis.prevChar = -1;
+				break;
+			case "font":
+				var a = e.attributes();
+				while(a.hasNext()) {
+					var a1 = a.next();
+					var v2 = e.get(a1);
+					if(a1.toLowerCase() == "face") {
+						font = this.loadFont(v2);
+					}
+				}
+				break;
+			case "img":
+				var i = this.loadImage(e.get("src"));
+				if(i == null) {
+					i = h2d_Tile.fromColor(16711935,8,8);
+				}
+				var size = metrics[metrics.length - 1].width + i.width + this.letterSpacing;
+				if(this.realMaxWidth >= 0 && size > this.realMaxWidth && metrics[metrics.length - 1].width > 0) {
+					if(splitNode.node != null) {
+						size = wordSplit() + i.width + this.letterSpacing;
+						var info1 = metrics[metrics.length - 1];
+						if(this.lineHeightMode._hx_index == 0) {
+							var grow = i.height - i.dy - info1.baseLine;
+							var h = info1.height;
+							var bl = info1.baseLine;
+							if(grow > 0) {
+								h += grow;
+								bl += grow;
+							}
+							metrics.push({ width : size, height : Math.max(h,bl + i.dy), baseLine : bl});
+						} else {
+							metrics.push({ width : size, height : info1.height, baseLine : info1.baseLine});
+						}
+					}
+				} else {
+					var info2 = metrics[metrics.length - 1];
+					info2.width = size;
+					if(this.lineHeightMode == h2d_LineHeightMode.Accurate) {
+						var grow1 = i.height - i.dy - info2.baseLine;
+						if(grow1 > 0) {
+							info2.baseLine += grow1;
+							info2.height += grow1;
+						}
+						grow1 = info2.baseLine + i.dy;
+						if(info2.height < grow1) {
+							info2.height = grow1;
+						}
+					}
+				}
+				this.newLine = false;
+				this.prevChar = -1;
+				break;
+			case "i":case "italic":
+				font = this.loadFont("italic");
+				break;
+			case "p":
+				if(!this.newLine) {
+					var fontInfo1 = _gthis.lineHeightMode == h2d_LineHeightMode.Constant ? _gthis.font : font;
+					metrics.push({ width : 0, height : fontInfo1.lineHeight, baseLine : fontInfo1.baseLine});
+					splitNode.node = null;
+					_gthis.newLine = true;
+					_gthis.prevChar = -1;
+				}
+				break;
+			default:
+			}
+			if(e.nodeType != Xml.Document && e.nodeType != Xml.Element) {
+				throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+			}
+			var child = HxOverrides.iter(e.children);
+			while(child.hasNext()) {
+				var child1 = child.next();
+				this.buildSizes(child1,font,metrics,splitNode);
+			}
+			if(nodeName == "p") {
+				if(!this.newLine) {
+					var fontInfo2 = _gthis.lineHeightMode == h2d_LineHeightMode.Constant ? _gthis.font : font;
+					metrics.push({ width : 0, height : fontInfo2.lineHeight, baseLine : fontInfo2.baseLine});
+					splitNode.node = null;
+					_gthis.newLine = true;
+					_gthis.prevChar = -1;
+				}
+			}
+		} else {
+			if(e.nodeType == Xml.Document || e.nodeType == Xml.Element) {
+				throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+			}
+			if(e.nodeValue.length != 0) {
+				this.newLine = false;
+				if(e.nodeType == Xml.Document || e.nodeType == Xml.Element) {
+					throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+				}
+				var text = this.htmlToText(e.nodeValue);
+				var fontInfo3 = _gthis.lineHeightMode == h2d_LineHeightMode.Constant ? _gthis.font : font;
+				var info3 = metrics.pop();
+				var leftMargin = info3.width;
+				var maxWidth = this.realMaxWidth < 0 ? Infinity : this.realMaxWidth;
+				var textSplit = [];
+				var restPos = 0;
+				var x = leftMargin;
+				var breakChars = 0;
+				var _g = 0;
+				var _g1 = text.length;
+				while(_g < _g1) {
+					var i1 = _g++;
+					var cc1 = HxOverrides.cca(text,i1);
+					var c1 = font.glyphs.h[cc1];
+					if(c1 == null) {
+						c1 = font.charset.resolveChar(cc1,font.glyphs);
+						if(c1 == null) {
+							c1 = cc1 == 13 || cc1 == 10 ? font.nullChar : font.defaultChar;
+						}
+					}
+					var g = c1;
+					var newline = cc1 == 10;
+					var esize = g.width + g.getKerningOffset(this.prevChar);
+					if(font.charset.isBreakChar(cc1)) {
+						if(x > maxWidth && textSplit.length == 0 && splitNode.node != null) {
+							metrics.push({ width : x, height : info3.height, baseLine : info3.baseLine});
+							x = wordSplit();
+						}
+						var size1 = x + esize + this.letterSpacing;
+						var k = i1 + 1;
+						var max = text.length;
+						var prevChar = this.prevChar;
+						while(size1 <= maxWidth && k < max) {
+							var cc2 = HxOverrides.cca(text,k++);
+							if(font.charset.isSpace(cc2) || cc2 == 10) {
+								break;
+							}
+							var c2 = font.glyphs.h[cc2];
+							if(c2 == null) {
+								c2 = font.charset.resolveChar(cc2,font.glyphs);
+								if(c2 == null) {
+									c2 = cc2 == 13 || cc2 == 10 ? font.nullChar : font.defaultChar;
+								}
+							}
+							var e1 = c2;
+							size1 += e1.width + this.letterSpacing + e1.getKerningOffset(prevChar);
+							prevChar = cc2;
+							if(font.charset.isBreakChar(cc2)) {
+								break;
+							}
+						}
+						if(size1 > maxWidth && i1 != max - 1) {
+							newline = true;
+							if(font.charset.isSpace(cc1)) {
+								textSplit.push(HxOverrides.substr(text,restPos,i1 - restPos));
+								g = null;
+							} else {
+								textSplit.push(HxOverrides.substr(text,restPos,i1 + 1 - restPos));
+								++breakChars;
+							}
+							splitNode.node = null;
+							restPos = i1 + 1;
+						} else {
+							splitNode.node = e;
+							splitNode.pos = i1 + breakChars;
+							splitNode.prevChar = this.prevChar;
+							splitNode.width = x;
+							splitNode.height = info3.height;
+							splitNode.baseLine = info3.baseLine;
+							splitNode.font = font;
+						}
+					}
+					if(g != null && cc1 != 10) {
+						x += esize + this.letterSpacing;
+					}
+					if(newline) {
+						metrics.push({ width : x, height : info3.height, baseLine : info3.baseLine});
+						info3.height = fontInfo3.lineHeight;
+						info3.baseLine = fontInfo3.baseLine;
+						x = 0;
+						this.prevChar = -1;
+						this.newLine = true;
+					} else {
+						this.prevChar = cc1;
+						this.newLine = false;
+					}
+				}
+				if(restPos < text.length) {
+					if(x > maxWidth) {
+						if(splitNode.node != null && splitNode.node != e) {
+							metrics.push({ width : x, height : info3.height, baseLine : info3.baseLine});
+							x = wordSplit();
+						}
+					}
+					textSplit.push(HxOverrides.substr(text,restPos,null));
+					metrics.push({ width : x, height : info3.height, baseLine : info3.baseLine});
+				}
+				if(this.newLine || metrics.length == 0) {
+					metrics.push({ width : 0, height : fontInfo3.lineHeight, baseLine : fontInfo3.baseLine});
+					textSplit.push("");
+				}
+				var v3 = textSplit.join("\n");
+				if(e.nodeType == Xml.Document || e.nodeType == Xml.Element) {
+					throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+				}
+				e.nodeValue = v3;
+			}
+		}
+	}
+	,htmlToText: function(t) {
+		if(this.condenseWhite) {
+			t = t.replace(h2d_HtmlText.REG_SPACES.r," ");
+		}
+		return t;
+	}
+	,nextLine: function(align,size) {
+		switch(align._hx_index) {
+		case 0:
+			this.xPos = 0;
+			if(this.xMin > 0) {
+				this.xMin = 0;
+			}
+			break;
+		case 1:case 2:case 3:case 4:
+			var max = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(this.calcWidth) : this.calcWidth < 0 ? 0 : Math.ceil(this.realMaxWidth);
+			var k = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
+			this.xPos = Math.floor((max - size) * k);
+			if(this.xPos < this.xMin) {
+				this.xMin = this.xPos;
+			}
+			break;
+		}
+	}
+	,splitText: function(text) {
+		if(this.realMaxWidth < 0) {
+			return text;
+		}
+		this.yPos = 0;
+		this.xMax = 0;
+		this.sizePos = 0;
+		this.calcYMin = 0;
+		var doc = this.parseText(text);
+		var splitNode = { node : null, font : this.font, width : 0, height : 0, baseLine : 0, pos : 0, prevChar : -1};
+		var metrics = [{ width : 0, height : this.font.lineHeight, baseLine : this.font.baseLine}];
+		this.prevChar = -1;
+		this.newLine = true;
+		if(doc.nodeType != Xml.Document && doc.nodeType != Xml.Element) {
+			throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(doc.nodeType));
+		}
+		var e = HxOverrides.iter(doc.children);
+		while(e.hasNext()) {
+			var e1 = e.next();
+			this.buildSizes(e1,this.font,metrics,splitNode);
+		}
+		this.xMax = 0;
+		var addBreaks = null;
+		addBreaks = function(e2) {
+			if(e2.nodeType == Xml.Element) {
+				if(e2.nodeType != Xml.Document && e2.nodeType != Xml.Element) {
+					throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(e2.nodeType));
+				}
+				var x = HxOverrides.iter(e2.children);
+				while(x.hasNext()) {
+					var x1 = x.next();
+					addBreaks(x1);
+				}
+			} else {
+				if(e2.nodeType == Xml.Document || e2.nodeType == Xml.Element) {
+					throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(e2.nodeType));
+				}
+				var text1 = e2.nodeValue;
+				var startI = 0;
+				var index = Lambda.indexOf(e2.parent,e2);
+				var _g = 0;
+				var _g1 = text1.length;
+				while(_g < _g1) {
+					var i = _g++;
+					if(HxOverrides.cca(text1,i) == 10) {
+						var pre = text1.substring(startI,i);
+						if(pre != "") {
+							e2.parent.insertChild(Xml.createPCData(pre),index++);
+						}
+						e2.parent.insertChild(Xml.createElement("br"),index++);
+						startI = i + 1;
+					}
+				}
+				if(startI < text1.length) {
+					var v = HxOverrides.substr(text1,startI,null);
+					if(e2.nodeType == Xml.Document || e2.nodeType == Xml.Element) {
+						throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(e2.nodeType));
+					}
+					e2.nodeValue = v;
+				} else {
+					e2.parent.removeChild(e2);
+				}
+			}
+		};
+		if(doc.nodeType != Xml.Document && doc.nodeType != Xml.Element) {
+			throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(doc.nodeType));
+		}
+		var d = HxOverrides.iter(doc.children);
+		while(d.hasNext()) {
+			var d1 = d.next();
+			addBreaks(d1);
+		}
+		return haxe_xml_Printer.print(doc);
+	}
+	,getTextProgress: function(text,progress) {
+		var _gthis = this;
+		if(progress >= text.length) {
+			return text;
+		}
+		var doc = this.parseText(text);
+		var progressRec = null;
+		progressRec = function(e) {
+			if(progress <= 0) {
+				e.parent.removeChild(e);
+				return;
+			}
+			if(e.nodeType == Xml.Element) {
+				var _g1 = 0;
+				var _g = [];
+				if(e.nodeType != Xml.Document && e.nodeType != Xml.Element) {
+					throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+				}
+				var x = HxOverrides.iter(e.children);
+				while(x.hasNext()) {
+					var x1 = x.next();
+					_g.push(x1);
+				}
+				var _g2 = _g;
+				while(_g1 < _g2.length) {
+					var x2 = _g2[_g1];
+					++_g1;
+					progressRec(x2);
+				}
+			} else {
+				if(e.nodeType == Xml.Document || e.nodeType == Xml.Element) {
+					throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+				}
+				var text1 = _gthis.htmlToText(e.nodeValue);
+				var len = text1.length;
+				if(len > progress) {
+					text1 = HxOverrides.substr(text1,0,progress | 0);
+					if(e.nodeType == Xml.Document || e.nodeType == Xml.Element) {
+						throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+					}
+					e.nodeValue = text1;
+				}
+				progress -= len;
+			}
+		};
+		var _g11 = 0;
+		var _g3 = [];
+		if(doc.nodeType != Xml.Document && doc.nodeType != Xml.Element) {
+			throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(doc.nodeType));
+		}
+		var x3 = HxOverrides.iter(doc.children);
+		while(x3.hasNext()) {
+			var x4 = x3.next();
+			_g3.push(x4);
+		}
+		var _g21 = _g3;
+		while(_g11 < _g21.length) {
+			var x5 = _g21[_g11];
+			++_g11;
+			progressRec(x5);
+		}
+		return haxe_xml_Printer.print(doc);
+	}
+	,addNode: function(e,font,align,rebuild,metrics) {
+		var _gthis = this;
+		if(e.nodeType == Xml.Element) {
+			var prevColor = null;
+			var prevGlyphs = null;
+			var oldAlign = align;
+			if(e.nodeType != Xml.Element) {
+				throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+			}
+			var nodeName = e.nodeName.toLowerCase();
+			switch(nodeName) {
+			case "b":case "bold":
+				font = _gthis.loadFont("bold");
+				if(prevGlyphs == null) {
+					prevGlyphs = _gthis.glyphs;
+				}
+				var prev = _gthis.glyphs;
+				_gthis.glyphs = new h2d_TileGroup(font == null ? null : font.tile,_gthis);
+				if(font != null) {
+					var _g = font.type;
+					if(_g._hx_index == 1) {
+						var smoothing = _g.smoothing;
+						var alphaCutoff = _g.alphaCutoff;
+						var channel = _g.channel;
+						var shader = new h3d_shader_SignedDistanceField();
+						shader.constModified = true;
+						shader.channel__ = channel;
+						shader.alphaCutoff__ = alphaCutoff;
+						shader.smoothing__ = smoothing;
+						_gthis.glyphs.smooth = true;
+						_gthis.glyphs.addShader(shader);
+					}
+				}
+				var _this = _gthis.glyphs.curColor;
+				var v = prev.curColor;
+				_this.x = v.x;
+				_this.y = v.y;
+				_this.z = v.z;
+				_this.w = v.w;
+				_gthis.elements.push(_gthis.glyphs);
+				break;
+			case "br":
+				if(_gthis.xPos > _gthis.xMax) {
+					_gthis.xMax = _gthis.xPos;
+				}
+				_gthis.yPos += metrics[_gthis.sizePos].height + _gthis.lineSpacing;
+				var size = metrics[++_gthis.sizePos].width;
+				switch(align._hx_index) {
+				case 0:
+					_gthis.xPos = 0;
+					if(_gthis.xMin > 0) {
+						_gthis.xMin = 0;
+					}
+					break;
+				case 1:case 2:case 3:case 4:
+					var max = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(_gthis.calcWidth) : _gthis.calcWidth < 0 ? 0 : Math.ceil(_gthis.realMaxWidth);
+					var k = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
+					_gthis.xPos = Math.floor((max - size) * k);
+					if(_gthis.xPos < _gthis.xMin) {
+						_gthis.xMin = _gthis.xPos;
+					}
+					break;
+				}
+				this.newLine = true;
+				this.prevChar = -1;
+				break;
+			case "font":
+				var a = e.attributes();
+				while(a.hasNext()) {
+					var a1 = a.next();
+					var v1 = e.get(a1);
+					switch(a1.toLowerCase()) {
+					case "color":
+						if(prevColor == null) {
+							var _this1 = this.glyphs.curColor;
+							prevColor = new h3d_Vector(_this1.x,_this1.y,_this1.z,_this1.w);
+						}
+						if(HxOverrides.cca(v1,0) == 35 && v1.length == 4) {
+							v1 = "#" + v1.charAt(1) + v1.charAt(1) + v1.charAt(2) + v1.charAt(2) + v1.charAt(3) + v1.charAt(3);
+						}
+						this.glyphs.setDefaultColor(Std.parseInt("0x" + HxOverrides.substr(v1,1,null)));
+						break;
+					case "face":
+						font = _gthis.loadFont(v1);
+						if(prevGlyphs == null) {
+							prevGlyphs = _gthis.glyphs;
+						}
+						var prev1 = _gthis.glyphs;
+						_gthis.glyphs = new h2d_TileGroup(font == null ? null : font.tile,_gthis);
+						if(font != null) {
+							var _g1 = font.type;
+							if(_g1._hx_index == 1) {
+								var smoothing1 = _g1.smoothing;
+								var alphaCutoff1 = _g1.alphaCutoff;
+								var channel1 = _g1.channel;
+								var shader1 = new h3d_shader_SignedDistanceField();
+								shader1.constModified = true;
+								shader1.channel__ = channel1;
+								shader1.alphaCutoff__ = alphaCutoff1;
+								shader1.smoothing__ = smoothing1;
+								_gthis.glyphs.smooth = true;
+								_gthis.glyphs.addShader(shader1);
+							}
+						}
+						var _this2 = _gthis.glyphs.curColor;
+						var v2 = prev1.curColor;
+						_this2.x = v2.x;
+						_this2.y = v2.y;
+						_this2.z = v2.z;
+						_this2.w = v2.w;
+						_gthis.elements.push(_gthis.glyphs);
+						break;
+					case "opacity":
+						if(prevColor == null) {
+							var _this3 = this.glyphs.curColor;
+							prevColor = new h3d_Vector(_this3.x,_this3.y,_this3.z,_this3.w);
+						}
+						this.glyphs.curColor.w *= parseFloat(v1);
+						break;
+					default:
+					}
+				}
+				break;
+			case "img":
+				var i = this.loadImage(e.get("src"));
+				if(i == null) {
+					i = h2d_Tile.fromColor(16711935,8,8);
+				}
+				var py = this.yPos + metrics[this.sizePos].baseLine - i.height;
+				if(py + i.dy < this.calcYMin) {
+					this.calcYMin = py + i.dy;
+				}
+				if(rebuild) {
+					var b = new h2d_Bitmap(i,this);
+					b.posChanged = true;
+					b.x = this.xPos;
+					b.posChanged = true;
+					b.y = py;
+					this.elements.push(b);
+				}
+				this.newLine = false;
+				this.prevChar = -1;
+				this.xPos += i.width + this.letterSpacing;
+				break;
+			case "i":case "italic":
+				font = _gthis.loadFont("italic");
+				if(prevGlyphs == null) {
+					prevGlyphs = _gthis.glyphs;
+				}
+				var prev2 = _gthis.glyphs;
+				_gthis.glyphs = new h2d_TileGroup(font == null ? null : font.tile,_gthis);
+				if(font != null) {
+					var _g2 = font.type;
+					if(_g2._hx_index == 1) {
+						var smoothing2 = _g2.smoothing;
+						var alphaCutoff2 = _g2.alphaCutoff;
+						var channel2 = _g2.channel;
+						var shader2 = new h3d_shader_SignedDistanceField();
+						shader2.constModified = true;
+						shader2.channel__ = channel2;
+						shader2.alphaCutoff__ = alphaCutoff2;
+						shader2.smoothing__ = smoothing2;
+						_gthis.glyphs.smooth = true;
+						_gthis.glyphs.addShader(shader2);
+					}
+				}
+				var _this4 = _gthis.glyphs.curColor;
+				var v3 = prev2.curColor;
+				_this4.x = v3.x;
+				_this4.y = v3.y;
+				_this4.z = v3.z;
+				_this4.w = v3.w;
+				_gthis.elements.push(_gthis.glyphs);
+				break;
+			case "p":
+				var a2 = e.attributes();
+				while(a2.hasNext()) {
+					var a3 = a2.next();
+					if(a3.toLowerCase() == "align") {
+						var v4 = e.get(a3);
+						if(v4 != null) {
+							switch(v4.toLowerCase()) {
+							case "center":
+								align = h2d_Align.Center;
+								break;
+							case "left":
+								align = h2d_Align.Left;
+								break;
+							case "multiline-center":
+								align = h2d_Align.MultilineCenter;
+								break;
+							case "multiline-right":
+								align = h2d_Align.MultilineRight;
+								break;
+							case "right":
+								align = h2d_Align.Right;
+								break;
+							}
+						}
+					}
+				}
+				if(!this.newLine) {
+					if(_gthis.xPos > _gthis.xMax) {
+						_gthis.xMax = _gthis.xPos;
+					}
+					_gthis.yPos += metrics[_gthis.sizePos].height + _gthis.lineSpacing;
+					var size1 = metrics[++_gthis.sizePos].width;
+					switch(align._hx_index) {
+					case 0:
+						_gthis.xPos = 0;
+						if(_gthis.xMin > 0) {
+							_gthis.xMin = 0;
+						}
+						break;
+					case 1:case 2:case 3:case 4:
+						var max1 = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(_gthis.calcWidth) : _gthis.calcWidth < 0 ? 0 : Math.ceil(_gthis.realMaxWidth);
+						var k1 = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
+						_gthis.xPos = Math.floor((max1 - size1) * k1);
+						if(_gthis.xPos < _gthis.xMin) {
+							_gthis.xMin = _gthis.xPos;
+						}
+						break;
+					}
+					this.newLine = true;
+					this.prevChar = -1;
+				} else {
+					var size2 = metrics[this.sizePos].width;
+					switch(align._hx_index) {
+					case 0:
+						this.xPos = 0;
+						if(this.xMin > 0) {
+							this.xMin = 0;
+						}
+						break;
+					case 1:case 2:case 3:case 4:
+						var max2 = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(this.calcWidth) : this.calcWidth < 0 ? 0 : Math.ceil(this.realMaxWidth);
+						var k2 = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
+						this.xPos = Math.floor((max2 - size2) * k2);
+						if(this.xPos < this.xMin) {
+							this.xMin = this.xPos;
+						}
+						break;
+					}
+				}
+				break;
+			default:
+			}
+			if(e.nodeType != Xml.Document && e.nodeType != Xml.Element) {
+				throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+			}
+			var child = HxOverrides.iter(e.children);
+			while(child.hasNext()) {
+				var child1 = child.next();
+				this.addNode(child1,font,align,rebuild,metrics);
+			}
+			align = oldAlign;
+			if(nodeName == "p") {
+				if(this.newLine) {
+					var size3 = metrics[this.sizePos].width;
+					switch(align._hx_index) {
+					case 0:
+						this.xPos = 0;
+						if(this.xMin > 0) {
+							this.xMin = 0;
+						}
+						break;
+					case 1:case 2:case 3:case 4:
+						var max3 = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(this.calcWidth) : this.calcWidth < 0 ? 0 : Math.ceil(this.realMaxWidth);
+						var k3 = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
+						this.xPos = Math.floor((max3 - size3) * k3);
+						if(this.xPos < this.xMin) {
+							this.xMin = this.xPos;
+						}
+						break;
+					}
+				} else if(this.sizePos < metrics.length - 2 || metrics[this.sizePos + 1].width != 0) {
+					if(_gthis.xPos > _gthis.xMax) {
+						_gthis.xMax = _gthis.xPos;
+					}
+					_gthis.yPos += metrics[_gthis.sizePos].height + _gthis.lineSpacing;
+					var size4 = metrics[++_gthis.sizePos].width;
+					switch(align._hx_index) {
+					case 0:
+						_gthis.xPos = 0;
+						if(_gthis.xMin > 0) {
+							_gthis.xMin = 0;
+						}
+						break;
+					case 1:case 2:case 3:case 4:
+						var max4 = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(_gthis.calcWidth) : _gthis.calcWidth < 0 ? 0 : Math.ceil(_gthis.realMaxWidth);
+						var k4 = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
+						_gthis.xPos = Math.floor((max4 - size4) * k4);
+						if(_gthis.xPos < _gthis.xMin) {
+							_gthis.xMin = _gthis.xPos;
+						}
+						break;
+					}
+					this.newLine = true;
+					this.prevChar = -1;
+				}
+			}
+			if(prevGlyphs != null) {
+				this.glyphs = prevGlyphs;
+			}
+			if(prevColor != null) {
+				var _this5 = this.glyphs.curColor;
+				_this5.x = prevColor.x;
+				_this5.y = prevColor.y;
+				_this5.z = prevColor.z;
+				_this5.w = prevColor.w;
+			}
+		} else {
+			if(e.nodeType == Xml.Document || e.nodeType == Xml.Element) {
+				throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+			}
+			if(e.nodeValue.length != 0) {
+				this.newLine = false;
+				if(e.nodeType == Xml.Document || e.nodeType == Xml.Element) {
+					throw new js__$Boot_HaxeError("Bad node type, unexpected " + _$Xml_XmlType_$Impl_$.toString(e.nodeType));
+				}
+				var t = e.nodeValue;
+				var dy = metrics[this.sizePos].baseLine - font.baseLine;
+				var _g3 = 0;
+				var _g11 = t.length;
+				while(_g3 < _g11) {
+					var i1 = _g3++;
+					var cc = HxOverrides.cca(t,i1);
+					if(cc == 10) {
+						if(_gthis.xPos > _gthis.xMax) {
+							_gthis.xMax = _gthis.xPos;
+						}
+						_gthis.yPos += metrics[_gthis.sizePos].height + _gthis.lineSpacing;
+						var size5 = metrics[++_gthis.sizePos].width;
+						switch(align._hx_index) {
+						case 0:
+							_gthis.xPos = 0;
+							if(_gthis.xMin > 0) {
+								_gthis.xMin = 0;
+							}
+							break;
+						case 1:case 2:case 3:case 4:
+							var max5 = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(_gthis.calcWidth) : _gthis.calcWidth < 0 ? 0 : Math.ceil(_gthis.realMaxWidth);
+							var k5 = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
+							_gthis.xPos = Math.floor((max5 - size5) * k5);
+							if(_gthis.xPos < _gthis.xMin) {
+								_gthis.xMin = _gthis.xPos;
+							}
+							break;
+						}
+						dy = metrics[this.sizePos].baseLine - font.baseLine;
+						this.prevChar = -1;
+						continue;
+					} else {
+						var c = font.glyphs.h[cc];
+						if(c == null) {
+							c = font.charset.resolveChar(cc,font.glyphs);
+							if(c == null) {
+								c = cc == 13 || cc == 10 ? font.nullChar : font.defaultChar;
+							}
+						}
+						var fc = c;
+						if(fc != null) {
+							this.xPos += fc.getKerningOffset(this.prevChar);
+							if(rebuild) {
+								var _this6 = this.glyphs;
+								_this6.content.add(this.xPos,this.yPos + dy,_this6.curColor.x,_this6.curColor.y,_this6.curColor.z,_this6.curColor.w,fc.t);
+							}
+							if(this.yPos == 0 && fc.t.dy + dy < this.calcYMin) {
+								this.calcYMin = fc.t.dy + dy;
+							}
+							this.xPos += fc.width + this.letterSpacing;
+						}
+						this.prevChar = cc;
+					}
+				}
+			}
+		}
+	}
+	,set_textColor: function(c) {
+		if(this.textColor == c) {
+			return c;
+		}
+		this.textColor = c;
+		this.rebuild();
+		return c;
+	}
+	,set_condenseWhite: function(value) {
+		if(this.condenseWhite != value) {
+			this.condenseWhite = value;
+			this.rebuild();
+		}
+		return value;
+	}
+	,set_lineHeightMode: function(v) {
+		if(this.lineHeightMode != v) {
+			this.lineHeightMode = v;
+			this.rebuild();
+		}
+		return v;
+	}
+	,getBoundsRec: function(relativeTo,out,forSize) {
+		if(forSize) {
+			var _g = 0;
+			var _g1 = this.elements;
+			while(_g < _g1.length) {
+				var i = _g1[_g];
+				++_g;
+				if(((i) instanceof h2d_Bitmap)) {
+					i.set_visible(false);
+				}
+			}
+		}
+		h2d_Text.prototype.getBoundsRec.call(this,relativeTo,out,forSize);
+		if(forSize) {
+			var _g2 = 0;
+			var _g11 = this.elements;
+			while(_g2 < _g11.length) {
+				var i1 = _g11[_g2];
+				++_g2;
+				i1.set_visible(true);
+			}
+		}
+	}
+	,__class__: h2d_HtmlText
+});
 var hxd_Interactive = function() { };
 $hxClasses["hxd.Interactive"] = hxd_Interactive;
 hxd_Interactive.__name__ = "hxd.Interactive";
@@ -8148,540 +10312,448 @@ var h2d_Align = $hxEnums["h2d.Align"] = { __ename__ : true, __constructs__ : ["L
 	,MultilineCenter: {_hx_index:4,__enum__:"h2d.Align",toString:$estr}
 };
 h2d_Align.__empty_constructs__ = [h2d_Align.Left,h2d_Align.Right,h2d_Align.Center,h2d_Align.MultilineRight,h2d_Align.MultilineCenter];
-var h2d_Text = function(font,parent) {
-	this.realMaxWidth = -1;
-	this.constraintWidth = -1;
-	h2d_Drawable.call(this,parent);
-	this.set_font(font);
-	this.set_textAlign(h2d_Align.Left);
-	this.set_letterSpacing(1);
-	this.set_lineSpacing(0);
-	this.set_text("");
-	this.currentText = "";
-	this.set_textColor(16777215);
-};
-$hxClasses["h2d.Text"] = h2d_Text;
-h2d_Text.__name__ = "h2d.Text";
-h2d_Text.__super__ = h2d_Drawable;
-h2d_Text.prototype = $extend(h2d_Drawable.prototype,{
-	set_font: function(font) {
-		if(this.font == font) {
-			return font;
-		}
-		this.font = font;
-		if(font != null) {
-			var _g = font.type;
-			switch(_g._hx_index) {
-			case 0:
-				if(this.sdfShader != null) {
-					this.removeShader(this.sdfShader);
-					this.sdfShader = null;
+var h2d_TextInput = function(font,parent) {
+	this.maxHistorySize = 100;
+	this.lastClick = 0.;
+	this.lastChange = 0.;
+	this.redo = [];
+	this.undo = [];
+	this.scrollX = 0.;
+	this.cursorScroll = 0;
+	this.cursorBlink = 0.;
+	this.canEdit = true;
+	this.cursorBlinkTime = 0.5;
+	this.cursorIndex = -1;
+	var _gthis = this;
+	h2d_Text.call(this,font,parent);
+	this.interactive = new h2d_Interactive(0,0);
+	this.interactive.set_cursor(hxd_Cursor.TextInput);
+	this.interactive.onPush = function(e) {
+		_gthis.onPush(e);
+		if(!e.cancel && e.button == 0) {
+			if(!_gthis.interactive.hasFocus()) {
+				e.kind = hxd_EventKind.EFocus;
+				_gthis.onFocus(e);
+				e.kind = hxd_EventKind.EPush;
+				if(e.cancel) {
+					return;
 				}
-				break;
-			case 1:
-				var smoothing = _g.smoothing;
-				var alphaCutoff = _g.alphaCutoff;
-				var channel = _g.channel;
-				if(this.sdfShader == null) {
-					this.sdfShader = new h3d_shader_SignedDistanceField();
-					this.addShader(this.sdfShader);
+				_gthis.interactive.focus();
+			}
+			_gthis.cursorBlink = 0;
+			var startIndex = _gthis.textPos(e.relX,e.relY);
+			_gthis.cursorIndex = startIndex;
+			_gthis.selectionRange = null;
+			var pt = new h2d_col_Point();
+			var scene = _gthis.getScene();
+			scene.startDrag(function(e1) {
+				pt.x = e1.relX;
+				pt.y = e1.relY;
+				_gthis.globalToLocal(pt);
+				var index = _gthis.textPos(pt.x,pt.y);
+				if(index == startIndex) {
+					_gthis.selectionRange = null;
+				} else if(index < startIndex) {
+					_gthis.selectionRange = { start : index, length : startIndex - index};
+				} else {
+					_gthis.selectionRange = { start : startIndex, length : index - startIndex};
 				}
-				this.sdfShader.alphaCutoff__ = alphaCutoff;
-				this.sdfShader.smoothing__ = smoothing;
-				var _this = this.sdfShader;
-				_this.constModified = true;
-				_this.channel__ = channel;
-				break;
-			}
+				_gthis.selectionSize = 0;
+				_gthis.cursorIndex = index;
+				if(e1.kind == hxd_EventKind.ERelease || _gthis.getScene() != scene) {
+					scene.stopDrag();
+				}
+			});
 		}
-		if(this.glyphs != null) {
-			var _this1 = this.glyphs;
-			if(_this1 != null && _this1.parent != null) {
-				_this1.parent.removeChild(_this1);
-			}
-		}
-		this.glyphs = new h2d_TileGroup(font == null ? null : font.tile,this);
-		this.glyphs.set_visible(false);
-		this.rebuild();
-		return font;
-	}
-	,set_textAlign: function(a) {
-		if(this.textAlign == a) {
-			return a;
-		}
-		this.textAlign = a;
-		this.rebuild();
-		return a;
-	}
-	,set_letterSpacing: function(s) {
-		if(this.letterSpacing == s) {
-			return s;
-		}
-		this.letterSpacing = s;
-		this.rebuild();
-		return s;
-	}
-	,set_lineSpacing: function(s) {
-		if(this.lineSpacing == s) {
-			return s;
-		}
-		this.lineSpacing = s;
-		this.rebuild();
-		return s;
-	}
-	,constraintSize: function(width,height) {
-		this.constraintWidth = width;
-		this.updateConstraint();
-	}
-	,onAdd: function() {
-		h2d_Drawable.prototype.onAdd.call(this);
-		this.rebuild();
-	}
-	,checkText: function() {
-		if(this.textChanged && this.text != this.currentText) {
-			this.textChanged = false;
-			this.currentText = this.text;
-			this.calcDone = false;
-			this.needsRebuild = true;
-		}
-	}
-	,sync: function(ctx) {
-		h2d_Drawable.prototype.sync.call(this,ctx);
-		if(this.textChanged && this.text != this.currentText) {
-			this.textChanged = false;
-			this.currentText = this.text;
-			this.calcDone = false;
-			this.needsRebuild = true;
-		}
-		if(this.needsRebuild) {
-			this.initGlyphs(this.currentText);
-		}
-	}
-	,draw: function(ctx) {
-		if(this.glyphs == null) {
-			this.emitTile(ctx,h2d_Tile.fromColor(16711935,16,16));
+	};
+	this.interactive.onKeyDown = function(e2) {
+		_gthis.onKeyDown(e2);
+		_gthis.handleKey(e2);
+	};
+	this.interactive.onTextInput = function(e3) {
+		_gthis.onTextInput(e3);
+		_gthis.handleKey(e3);
+	};
+	this.interactive.onFocusLost = function(e4) {
+		_gthis.cursorIndex = -1;
+		_gthis.selectionRange = null;
+		_gthis.onFocusLost(e4);
+	};
+	this.interactive.onClick = function(e5) {
+		_gthis.onClick(e5);
+		if(e5.cancel) {
 			return;
 		}
-		if(this.textChanged && this.text != this.currentText) {
-			this.textChanged = false;
-			this.currentText = this.text;
-			this.calcDone = false;
-			this.needsRebuild = true;
+		var t = Date.now() / 1000;
+		if(t - _gthis.lastClick < 0.3 && _gthis.text.length != 0) {
+			_gthis.selectionRange = { start : 0, length : _gthis.text.length};
+			_gthis.selectionSize = 0;
+			_gthis.cursorIndex = _gthis.text.length;
 		}
-		if(this.needsRebuild) {
-			this.initGlyphs(this.currentText);
+		_gthis.lastClick = t;
+	};
+	this.interactive.onKeyUp = function(e6) {
+		_gthis.onKeyUp(e6);
+	};
+	this.interactive.onRelease = function(e7) {
+		_gthis.onRelease(e7);
+	};
+	this.interactive.onFocus = function(e8) {
+		_gthis.onFocus(e8);
+	};
+	this.interactive.onKeyUp = function(e9) {
+		_gthis.onKeyUp(e9);
+	};
+	this.interactive.onMove = function(e10) {
+		_gthis.onMove(e10);
+	};
+	this.interactive.onOver = function(e11) {
+		_gthis.onOver(e11);
+	};
+	this.interactive.onOut = function(e12) {
+		_gthis.onOut(e12);
+	};
+	this.interactive.set_cursor(hxd_Cursor.TextInput);
+	this.addChildAt(this.interactive,0);
+};
+$hxClasses["h2d.TextInput"] = h2d_TextInput;
+h2d_TextInput.__name__ = "h2d.TextInput";
+h2d_TextInput.__super__ = h2d_Text;
+h2d_TextInput.prototype = $extend(h2d_Text.prototype,{
+	constraintSize: function(width,height) {
+	}
+	,handleKey: function(e) {
+		if(e.cancel || this.cursorIndex < 0) {
+			return;
 		}
-		if(this.dropShadow != null) {
-			var oldX = this.absX;
-			var oldY = this.absY;
-			this.absX += this.dropShadow.dx * this.matA + this.dropShadow.dy * this.matC;
-			this.absY += this.dropShadow.dx * this.matB + this.dropShadow.dy * this.matD;
-			var oldR = this.color.x;
-			var oldG = this.color.y;
-			var oldB = this.color.z;
-			var oldA = this.color.w;
-			var _this = this.color;
-			var c = this.dropShadow.color;
-			_this.x = (c >> 16 & 255) / 255;
-			_this.y = (c >> 8 & 255) / 255;
-			_this.z = (c & 255) / 255;
-			_this.w = (c >>> 24) / 255;
-			this.color.w = this.dropShadow.alpha * oldA;
-			this.glyphs.drawWith(ctx,this);
-			this.absX = oldX;
-			this.absY = oldY;
-			var _this1 = this.color;
-			var x = oldR;
-			var y = oldG;
-			var z = oldB;
-			var w = oldA;
-			if(w == null) {
-				w = 1.;
+		var oldIndex = this.cursorIndex;
+		var oldText = this.text;
+		switch(e.keyCode) {
+		case 8:
+			if(this.selectionRange != null) {
+				if(!this.canEdit) {
+					return;
+				}
+				this.beforeChange();
+				this.cutSelection();
+				this.onChange();
+			} else if(this.cursorIndex > 0 && this.canEdit) {
+				this.beforeChange();
+				this.cursorIndex--;
+				this.set_text(HxOverrides.substr(this.text,0,this.cursorIndex) + HxOverrides.substr(this.text,this.cursorIndex + 1,null));
+				this.onChange();
 			}
-			if(z == null) {
-				z = 0.;
+			break;
+		case 13:case 108:
+			this.cursorIndex = -1;
+			this.interactive.blur();
+			return;
+		case 35:
+			this.cursorIndex = this.text.length;
+			break;
+		case 36:
+			this.cursorIndex = 0;
+			break;
+		case 37:
+			if(this.cursorIndex > 0) {
+				this.cursorIndex--;
 			}
-			if(y == null) {
-				y = 0.;
+			break;
+		case 39:
+			if(this.cursorIndex < this.text.length) {
+				this.cursorIndex++;
 			}
-			if(x == null) {
-				x = 0.;
+			break;
+		case 46:
+			if(this.selectionRange != null) {
+				if(!this.canEdit) {
+					return;
+				}
+				this.beforeChange();
+				this.cutSelection();
+				this.onChange();
+			} else if(this.cursorIndex < this.text.length && this.canEdit) {
+				this.beforeChange();
+				this.set_text(HxOverrides.substr(this.text,0,this.cursorIndex) + HxOverrides.substr(this.text,this.cursorIndex + 1,null));
+				this.onChange();
 			}
-			_this1.x = x;
-			_this1.y = y;
-			_this1.z = z;
-			_this1.w = w;
+			break;
+		case 89:
+			if(hxd_Key.isDown(17)) {
+				if(this.redo.length > 0 && this.canEdit) {
+					this.undo.push(this.curHistoryState());
+					this.setState(this.redo.pop());
+				}
+				return;
+			} else {
+				if(e.kind == hxd_EventKind.EKeyDown) {
+					return;
+				}
+				if(e.charCode != 0 && this.canEdit) {
+					if(!this.font.hasChar(e.charCode)) {
+						return;
+					}
+					this.beforeChange();
+					if(this.selectionRange != null) {
+						this.cutSelection();
+					}
+					var code = e.charCode;
+					this.set_text(HxOverrides.substr(this.text,0,this.cursorIndex) + String.fromCodePoint(code) + HxOverrides.substr(this.text,this.cursorIndex,null));
+					this.cursorIndex++;
+					this.onChange();
+				}
+			}
+			break;
+		case 90:
+			if(hxd_Key.isDown(17)) {
+				if(this.undo.length > 0 && this.canEdit) {
+					this.redo.push(this.curHistoryState());
+					this.setState(this.undo.pop());
+				}
+				return;
+			} else {
+				if(e.kind == hxd_EventKind.EKeyDown) {
+					return;
+				}
+				if(e.charCode != 0 && this.canEdit) {
+					if(!this.font.hasChar(e.charCode)) {
+						return;
+					}
+					this.beforeChange();
+					if(this.selectionRange != null) {
+						this.cutSelection();
+					}
+					var code1 = e.charCode;
+					this.set_text(HxOverrides.substr(this.text,0,this.cursorIndex) + String.fromCodePoint(code1) + HxOverrides.substr(this.text,this.cursorIndex,null));
+					this.cursorIndex++;
+					this.onChange();
+				}
+			}
+			break;
+		default:
+			if(e.kind == hxd_EventKind.EKeyDown) {
+				return;
+			}
+			if(e.charCode != 0 && this.canEdit) {
+				if(!this.font.hasChar(e.charCode)) {
+					return;
+				}
+				this.beforeChange();
+				if(this.selectionRange != null) {
+					this.cutSelection();
+				}
+				var code2 = e.charCode;
+				this.set_text(HxOverrides.substr(this.text,0,this.cursorIndex) + String.fromCodePoint(code2) + HxOverrides.substr(this.text,this.cursorIndex,null));
+				this.cursorIndex++;
+				this.onChange();
+			}
 		}
-		this.glyphs.drawWith(ctx,this);
+		this.cursorBlink = 0.;
+		if(hxd_Key.isDown(16) && this.text == oldText) {
+			if(this.cursorIndex == oldIndex) {
+				return;
+			}
+			if(this.selectionRange == null) {
+				this.selectionRange = oldIndex < this.cursorIndex ? { start : oldIndex, length : this.cursorIndex - oldIndex} : { start : this.cursorIndex, length : oldIndex - this.cursorIndex};
+			} else if(oldIndex == this.selectionRange.start) {
+				this.selectionRange.length += oldIndex - this.cursorIndex;
+				this.selectionRange.start = this.cursorIndex;
+			} else {
+				this.selectionRange.length += this.cursorIndex - oldIndex;
+			}
+			if(this.selectionRange.length == 0) {
+				this.selectionRange = null;
+			} else if(this.selectionRange.length < 0) {
+				this.selectionRange.start += this.selectionRange.length;
+				this.selectionRange.length = -this.selectionRange.length;
+			}
+			this.selectionSize = 0;
+		} else {
+			this.selectionRange = null;
+		}
+	}
+	,cutSelection: function() {
+		if(this.selectionRange == null) {
+			return false;
+		}
+		this.cursorIndex = this.selectionRange.start;
+		var end = this.cursorIndex + this.selectionRange.length;
+		this.set_text(HxOverrides.substr(this.text,0,this.cursorIndex) + HxOverrides.substr(this.text,end,null));
+		this.selectionRange = null;
+		return true;
+	}
+	,setState: function(h) {
+		this.set_text(h.t);
+		this.cursorIndex = h.c;
+		this.selectionRange = h.sel;
+		if(this.selectionRange != null) {
+			this.cursorIndex = this.selectionRange.start + this.selectionRange.length;
+		}
+	}
+	,curHistoryState: function() {
+		return { t : this.text, c : this.cursorIndex, sel : this.selectionRange == null ? null : { start : this.selectionRange.start, length : this.selectionRange.length}};
+	}
+	,beforeChange: function() {
+		var t = Date.now() / 1000;
+		if(t - this.lastChange < 1) {
+			this.lastChange = t;
+			return;
+		}
+		this.lastChange = t;
+		this.undo.push(this.curHistoryState());
+		this.redo = [];
+		while(this.undo.length > this.maxHistorySize) this.undo.shift();
+	}
+	,getSelectedText: function() {
+		if(this.selectionRange == null) {
+			return null;
+		} else {
+			return HxOverrides.substr(this.text,this.selectionRange.start,this.selectionRange.length);
+		}
 	}
 	,set_text: function(t) {
-		var t1 = t == null ? "null" : t;
-		if(t1 == this.text) {
-			return t1;
+		h2d_Text.prototype.set_text.call(this,t);
+		if(this.cursorIndex > t.length) {
+			this.cursorIndex = t.length;
 		}
-		this.text = t1;
-		this.textChanged = true;
-		this.validateText();
-		if(this.parentContainer != null) {
-			this.parentContainer.contentChanged(this);
-		}
-		return t1;
+		return t;
 	}
-	,validateText: function() {
-	}
-	,rebuild: function() {
-		this.calcDone = false;
-		this.needsRebuild = true;
-		if(this.parentContainer != null) {
-			this.parentContainer.contentChanged(this);
-		}
-	}
-	,calcTextWidth: function(text) {
-		if(this.calcDone) {
-			var ow = this.calcWidth;
-			var oh = this.calcHeight;
-			var osh = this.calcSizeHeight;
-			var ox = this.calcXMin;
-			var oy = this.calcYMin;
-			this.initGlyphs(text,false);
-			var w = this.calcWidth;
-			this.calcWidth = ow;
-			this.calcHeight = oh;
-			this.calcSizeHeight = osh;
-			this.calcXMin = ox;
-			this.calcYMin = oy;
-			return w;
-		} else {
-			this.initGlyphs(text,false);
-			this.calcDone = false;
-			return this.calcWidth;
-		}
-	}
-	,splitText: function(text) {
-		return this.splitRawText(text,0,0);
-	}
-	,splitRawText: function(text,leftMargin,afterData,font,sizes,prevChar) {
-		if(prevChar == null) {
-			prevChar = -1;
-		}
-		if(afterData == null) {
-			afterData = 0.;
-		}
-		if(leftMargin == null) {
-			leftMargin = 0.;
-		}
-		var maxWidth = this.realMaxWidth;
-		if(maxWidth < 0) {
-			if(sizes == null) {
-				return text;
-			} else {
-				maxWidth = Infinity;
-			}
-		}
-		if(font == null) {
-			font = this.font;
-		}
-		var lines = [];
-		var restPos = 0;
-		var x = leftMargin;
-		var _g = 0;
-		var _g1 = text.length;
-		while(_g < _g1) {
-			var i = _g++;
-			var cc = HxOverrides.cca(text,i);
-			var c = font.glyphs.h[cc];
-			if(c == null) {
-				c = font.charset.resolveChar(cc,font.glyphs);
-				if(c == null) {
-					c = cc == 13 || cc == 10 ? font.nullChar : font.defaultChar;
-				}
-			}
-			var e = c;
-			var newline = cc == 10;
-			var esize = e.width + e.getKerningOffset(prevChar);
-			if(font.charset.isBreakChar(cc)) {
-				if(lines.length == 0 && leftMargin > 0 && x > maxWidth) {
-					lines.push("");
-					if(sizes != null) {
-						sizes.push(leftMargin);
-					}
-					x -= leftMargin;
-				}
-				var size = x + esize + this.letterSpacing;
-				var k = i + 1;
-				var max = text.length;
-				var prevChar1 = prevChar;
-				var breakFound = false;
-				while(size <= maxWidth && k < max) {
-					var cc1 = HxOverrides.cca(text,k++);
-					if(font.charset.isSpace(cc1) || cc1 == 10) {
-						breakFound = true;
-						break;
-					}
-					var c1 = font.glyphs.h[cc1];
-					if(c1 == null) {
-						c1 = font.charset.resolveChar(cc1,font.glyphs);
-						if(c1 == null) {
-							c1 = cc1 == 13 || cc1 == 10 ? font.nullChar : font.defaultChar;
-						}
-					}
-					var e1 = c1;
-					size += e1.width + this.letterSpacing + e1.getKerningOffset(prevChar1);
-					prevChar1 = cc1;
-					if(font.charset.isBreakChar(cc1)) {
-						break;
-					}
-				}
-				if(size > maxWidth || !breakFound && size + afterData > maxWidth) {
-					newline = true;
-					if(font.charset.isSpace(cc)) {
-						lines.push(HxOverrides.substr(text,restPos,i - restPos));
-						e = null;
-					} else {
-						lines.push(HxOverrides.substr(text,restPos,i + 1 - restPos));
-					}
-					restPos = i + 1;
-				}
-			}
-			if(e != null && cc != 10) {
-				x += esize + this.letterSpacing;
-			}
-			if(newline) {
-				if(sizes != null) {
-					sizes.push(x);
-				}
-				x = 0;
-				prevChar = -1;
-			} else {
-				prevChar = cc;
-			}
-		}
-		if(restPos < text.length) {
-			if(lines.length == 0 && leftMargin > 0 && x + afterData - this.letterSpacing > maxWidth) {
-				lines.push("");
-				if(sizes != null) {
-					sizes.push(leftMargin);
-				}
-				x -= leftMargin;
-			}
-			lines.push(HxOverrides.substr(text,restPos,text.length - restPos));
-			if(sizes != null) {
-				sizes.push(x);
-			}
-		}
-		return lines.join("\n");
-	}
-	,getTextProgress: function(text,progress) {
-		if(progress >= text.length) {
-			return text;
-		}
-		return HxOverrides.substr(text,0,progress | 0);
+	,set_font: function(f) {
+		h2d_Text.prototype.set_font.call(this,f);
+		this.cursorTile = h2d_Tile.fromColor(16777215,1,this.font.size);
+		this.cursorTile.dy = 2;
+		this.selectionTile = h2d_Tile.fromColor(3381759,0,Math.ceil(this.font.lineHeight));
+		return f;
 	}
 	,initGlyphs: function(text,rebuild) {
 		if(rebuild == null) {
 			rebuild = true;
 		}
+		h2d_Text.prototype.initGlyphs.call(this,text,rebuild);
 		if(rebuild) {
-			this.glyphs.clear();
-		}
-		var x = 0.;
-		var y = 0.;
-		var xMax = 0.;
-		var xMin = 0.;
-		var yMin = 0.;
-		var prevChar = -1;
-		var linei = 0;
-		var align = this.textAlign;
-		var lines = [];
-		var dl = this.font.lineHeight + this.lineSpacing;
-		var t = this.splitRawText(text,0,0,null,lines);
-		var _g = 0;
-		while(_g < lines.length) {
-			var lw = lines[_g];
-			++_g;
-			if(lw > x) {
-				x = lw;
+			this.calcWidth += this.cursorTile.width;
+			if(this.inputWidth != null && this.calcWidth > this.inputWidth) {
+				this.calcWidth = this.inputWidth;
 			}
 		}
-		this.calcWidth = x;
-		switch(align._hx_index) {
-		case 0:
-			x = 0;
-			break;
-		case 1:case 2:case 3:case 4:
-			var max = align == h2d_Align.MultilineCenter || align == h2d_Align.MultilineRight ? Math.ceil(this.calcWidth) : this.realMaxWidth < 0 ? 0 : Math.ceil(this.realMaxWidth);
-			var k = align == h2d_Align.Center || align == h2d_Align.MultilineCenter ? 0.5 : 1;
-			var _g1 = 0;
-			var _g2 = lines.length;
-			while(_g1 < _g2) {
-				var i = _g1++;
-				lines[i] = Math.floor((max - lines[i]) * k);
+	}
+	,textPos: function(x,y) {
+		x += this.scrollX;
+		var pos = 0;
+		while(pos < this.text.length) {
+			if(this.calcTextWidth(HxOverrides.substr(this.text,0,pos + 1)) > x) {
+				break;
 			}
-			x = lines[0];
-			xMin = x;
-			break;
+			++pos;
 		}
-		var _g11 = 0;
-		var _g21 = t.length;
-		while(_g11 < _g21) {
-			var i1 = _g11++;
-			var cc = HxOverrides.cca(t,i1);
-			var _this = this.font;
-			var c = _this.glyphs.h[cc];
-			if(c == null) {
-				c = _this.charset.resolveChar(cc,_this.glyphs);
-				if(c == null) {
-					c = cc == 13 || cc == 10 ? _this.nullChar : _this.defaultChar;
-				}
+		return pos;
+	}
+	,sync: function(ctx) {
+		var tmp = this.inputWidth != null ? this.inputWidth : this.maxWidth != null ? Math.ceil(this.maxWidth) : this.get_textWidth();
+		this.interactive.width = tmp;
+		this.interactive.height = this.font.lineHeight;
+		h2d_Text.prototype.sync.call(this,ctx);
+	}
+	,draw: function(ctx) {
+		if(this.inputWidth != null) {
+			var h = this.localToGlobal(new h2d_col_Point(this.inputWidth,this.font.lineHeight));
+			ctx.setRenderZone(this.absX,this.absY,h.x - this.absX,h.y - this.absY);
+		}
+		if(this.cursorIndex >= 0 && (this.text != this.cursorText || this.cursorIndex != this.cursorXIndex)) {
+			if(this.cursorIndex > this.text.length) {
+				this.cursorIndex = this.text.length;
 			}
-			var e = c;
-			var offs = e.getKerningOffset(prevChar);
-			var esize = e.width + offs;
-			if(cc == 10) {
-				if(x > xMax) {
-					xMax = x;
-				}
-				switch(align._hx_index) {
-				case 0:
-					x = 0;
-					break;
-				case 1:case 2:case 3:case 4:
-					x = lines[++linei];
-					if(x < xMin) {
-						xMin = x;
-					}
-					break;
-				}
-				y += dl;
-				prevChar = -1;
-			} else {
-				if(e != null) {
-					if(rebuild) {
-						var _this1 = this.glyphs;
-						_this1.content.add(x + offs,y,_this1.curColor.x,_this1.curColor.y,_this1.curColor.z,_this1.curColor.w,e.t);
-					}
-					if(y == 0 && e.t.dy < yMin) {
-						yMin = e.t.dy;
-					}
-					x += esize + this.letterSpacing;
-				}
-				prevChar = cc;
+			this.cursorText = this.text;
+			this.cursorXIndex = this.cursorIndex;
+			this.cursorX = this.calcTextWidth(HxOverrides.substr(this.text,0,this.cursorIndex));
+			if(this.inputWidth != null && this.cursorX - this.scrollX >= this.inputWidth) {
+				this.scrollX = this.cursorX - this.inputWidth + 1;
+			} else if(this.cursorX < this.scrollX) {
+				this.scrollX = this.cursorX;
 			}
 		}
-		if(x > xMax) {
-			xMax = x;
+		this.absX -= this.scrollX * this.matA;
+		this.absY -= this.scrollX * this.matC;
+		if(this.selectionRange != null) {
+			if(this.selectionSize == 0) {
+				this.selectionPos = this.calcTextWidth(HxOverrides.substr(this.text,0,this.selectionRange.start));
+				this.selectionSize = this.calcTextWidth(HxOverrides.substr(this.text,this.selectionRange.start,this.selectionRange.length));
+				if(this.selectionRange.start + this.selectionRange.length == this.text.length) {
+					this.selectionSize += this.cursorTile.width;
+				}
+			}
+			this.selectionTile.dx += this.selectionPos;
+			this.selectionTile.width += this.selectionSize;
+			this.emitTile(ctx,this.selectionTile);
+			this.selectionTile.dx -= this.selectionPos;
+			this.selectionTile.width -= this.selectionSize;
 		}
-		this.calcXMin = xMin;
-		this.calcYMin = yMin;
-		this.calcWidth = xMax - xMin;
-		this.calcHeight = y + this.font.lineHeight;
-		this.calcSizeHeight = y + (this.font.baseLine > 0 ? this.font.baseLine : this.font.lineHeight);
-		this.calcDone = true;
-		if(rebuild) {
-			this.needsRebuild = false;
+		h2d_Text.prototype.draw.call(this,ctx);
+		this.absX += this.scrollX * this.matA;
+		this.absY += this.scrollX * this.matC;
+		if(this.cursorIndex >= 0) {
+			this.cursorBlink += ctx.elapsedTime;
+			if(this.cursorBlink % (this.cursorBlinkTime * 2) < this.cursorBlinkTime) {
+				this.cursorTile.dx += this.cursorX - this.scrollX;
+				this.emitTile(ctx,this.cursorTile);
+				this.cursorTile.dx -= this.cursorX - this.scrollX;
+			}
 		}
-	}
-	,updateSize: function() {
-		if(this.textChanged && this.text != this.currentText) {
-			this.textChanged = false;
-			this.currentText = this.text;
-			this.calcDone = false;
-			this.needsRebuild = true;
-		}
-		if(!this.calcDone) {
-			this.initGlyphs(this.text,this.needsRebuild);
-		}
-	}
-	,get_textHeight: function() {
-		if(this.textChanged && this.text != this.currentText) {
-			this.textChanged = false;
-			this.currentText = this.text;
-			this.calcDone = false;
-			this.needsRebuild = true;
-		}
-		if(!this.calcDone) {
-			this.initGlyphs(this.text,this.needsRebuild);
-		}
-		return this.calcHeight;
-	}
-	,get_textWidth: function() {
-		if(this.textChanged && this.text != this.currentText) {
-			this.textChanged = false;
-			this.currentText = this.text;
-			this.calcDone = false;
-			this.needsRebuild = true;
-		}
-		if(!this.calcDone) {
-			this.initGlyphs(this.text,this.needsRebuild);
-		}
-		return this.calcWidth;
-	}
-	,set_maxWidth: function(w) {
-		if(this.maxWidth == w) {
-			return w;
-		}
-		this.maxWidth = w;
-		this.updateConstraint();
-		return w;
-	}
-	,updateConstraint: function() {
-		var old = this.realMaxWidth;
-		if(this.maxWidth == null) {
-			this.realMaxWidth = this.constraintWidth;
-		} else if(this.constraintWidth < 0) {
-			this.realMaxWidth = this.maxWidth;
-		} else {
-			var a = this.maxWidth;
-			var b = this.constraintWidth;
-			this.realMaxWidth = a > b ? b : a;
-		}
-		if(this.realMaxWidth != old) {
-			this.rebuild();
+		if(this.inputWidth != null) {
+			ctx.hasRenderZone = false;
+			ctx.engine.setRenderZone();
 		}
 	}
-	,set_textColor: function(c) {
-		if(this.textColor == c) {
-			return c;
+	,focus: function() {
+		this.interactive.focus();
+		if(this.cursorIndex < 0) {
+			this.cursorIndex = 0;
+			if(this.text != "") {
+				this.selectionRange = { start : 0, length : this.text.length};
+			}
 		}
-		this.textColor = c;
-		var a = this.color.w;
-		var _this = this.color;
-		_this.x = (c >> 16 & 255) / 255;
-		_this.y = (c >> 8 & 255) / 255;
-		_this.z = (c & 255) / 255;
-		_this.w = (c >>> 24) / 255;
-		this.color.w = a;
-		return c;
 	}
-	,getBoundsRec: function(relativeTo,out,forSize) {
-		h2d_Drawable.prototype.getBoundsRec.call(this,relativeTo,out,forSize);
-		if(this.textChanged && this.text != this.currentText) {
-			this.textChanged = false;
-			this.currentText = this.text;
-			this.calcDone = false;
-			this.needsRebuild = true;
-		}
-		if(!this.calcDone) {
-			this.initGlyphs(this.text,this.needsRebuild);
-		}
-		var x;
-		var y;
-		var w;
-		var h;
-		if(forSize) {
-			x = this.calcXMin;
-			y = 0.;
-			w = this.calcWidth;
-			h = this.calcSizeHeight;
-		} else {
-			x = this.calcXMin;
-			y = this.calcYMin;
-			w = this.calcWidth;
-			h = this.calcHeight - this.calcYMin;
-		}
-		this.addBounds(relativeTo,out,x,y,w,h);
+	,hasFocus: function() {
+		return this.interactive.hasFocus();
 	}
-	,__class__: h2d_Text
+	,onOut: function(e) {
+	}
+	,onOver: function(e) {
+	}
+	,onMove: function(e) {
+	}
+	,onClick: function(e) {
+	}
+	,onPush: function(e) {
+	}
+	,onRelease: function(e) {
+	}
+	,onKeyDown: function(e) {
+	}
+	,onKeyUp: function(e) {
+	}
+	,onTextInput: function(e) {
+	}
+	,onFocus: function(e) {
+	}
+	,onFocusLost: function(e) {
+	}
+	,onChange: function() {
+	}
+	,drawRec: function(ctx) {
+		var old = this.interactive.visible;
+		this.interactive.set_visible(false);
+		this.interactive.draw(ctx);
+		h2d_Text.prototype.drawRec.call(this,ctx);
+		this.interactive.set_visible(old);
+	}
+	,get_backgroundColor: function() {
+		return this.interactive.backgroundColor;
+	}
+	,set_backgroundColor: function(v) {
+		return this.interactive.backgroundColor = v;
+	}
+	,__class__: h2d_TextInput
 });
 var h2d_Tile = function(tex,x,y,w,h,dx,dy) {
 	if(dy == null) {
@@ -15189,18 +17261,18 @@ h3d_Vector.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.2831853071795862;
-		hue = r >= 0 ? r : r + 6.2831853071795862;
+		var r = hue % 6.28318530717958623;
+		hue = r >= 0 ? r : r + 6.28318530717958623;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f1 = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f1 < 0 ? -f1 : f1));
 		var m = brightness - c / 2;
-		if(hue < 1.0471975511965976) {
+		if(hue < 1.04719755119659763) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.0943951023931953) {
+		} else if(hue < 2.09439510239319526) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -15208,11 +17280,11 @@ h3d_Vector.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.1887902047863905) {
+		} else if(hue < 4.18879020478639053) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.2359877559829888) {
+		} else if(hue < 5.23598775598298882) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -15260,7 +17332,7 @@ h3d_Vector.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		return new h3d_Vector(h,s,l,this.w);
 	}
@@ -35892,7 +37964,7 @@ h3d_shader_Shadow.prototype = $extend(hxsl_Shader.prototype,{
 	,__class__: h3d_shader_Shadow
 });
 var h3d_shader_SignedDistanceField = function() {
-	this.smoothing__ = 0.041666666666666664;
+	this.smoothing__ = 0.0416666666666666644;
 	this.alphaCutoff__ = 0.5;
 	this.channel__ = 0;
 	hxsl_Shader.call(this);
@@ -36647,6 +38719,25 @@ haxe_MainLoop.tick = function() {
 		e = next;
 	}
 	return wait;
+};
+var haxe_Resource = function() { };
+$hxClasses["haxe.Resource"] = haxe_Resource;
+haxe_Resource.__name__ = "haxe.Resource";
+haxe_Resource.getString = function(name) {
+	var _g = 0;
+	var _g1 = haxe_Resource.content;
+	while(_g < _g1.length) {
+		var x = _g1[_g];
+		++_g;
+		if(x.name == name) {
+			if(x.str != null) {
+				return x.str;
+			}
+			var b = haxe_crypto_Base64.decode(x.data);
+			return b.toString();
+		}
+	}
+	return null;
 };
 var haxe_Timer = function(time_ms) {
 	var me = this;
@@ -40273,6 +42364,104 @@ hxd_Event.prototype = {
 	}
 	,__class__: hxd_Event
 };
+var hxd_File = function() { };
+$hxClasses["hxd.File"] = hxd_File;
+hxd_File.__name__ = "hxd.File";
+hxd_File.browse = function(onSelect,options) {
+	if(options == null) {
+		options = { };
+	}
+	var input = window.document.getElementById("heapsBrowserInput");
+	if(input == null) {
+		input = window.document.createElement("input");
+		input.setAttribute("id","heapsBrowserInput");
+		window.document.body.appendChild(input);
+	}
+	input.setAttribute("type","file");
+	input.style.display = "none";
+	if(options.fileTypes != null) {
+		var extensions = [];
+		var _g = 0;
+		var _g1 = options.fileTypes;
+		while(_g < _g1.length) {
+			var ft = _g1[_g];
+			++_g;
+			var _g2 = 0;
+			var _g11 = ft.extensions;
+			while(_g2 < _g11.length) {
+				var e = _g11[_g2];
+				++_g2;
+				extensions.push("." + e);
+			}
+		}
+		var tmp = extensions.join(",");
+		input.setAttribute("accept",tmp);
+	}
+	input.onclick = function(e1) {
+		input.value = null;
+	};
+	input.onchange = function(e2) {
+		var file = e2.target.files[0];
+		var b = { fileName : file.name, load : function(onReady) {
+			var reader = new FileReader();
+			reader.readAsDataURL(file);
+			reader.onload = function(re) {
+				var raw = re.target.result;
+				var header = HxOverrides.substr(raw,0,raw.indexOf(","));
+				var data = HxOverrides.substr(raw,raw.indexOf(",") + 1,null);
+				if(raw.indexOf(";") >= 0) {
+					var b1;
+					if(header.split(";")[1] == "base64") {
+						b1 = haxe_crypto_Base64.decode(data);
+					} else {
+						throw new js__$Boot_HaxeError("Unsupported encoding: " + header.split(";")[1]);
+					}
+					onReady(b1);
+				} else {
+					var b2 = haxe_io_Bytes.ofString(data);
+					onReady(b2);
+				}
+			};
+		}};
+		onSelect(b);
+		input.remove();
+	};
+	input.click();
+};
+hxd_File.saveAs = function(dataContent,options) {
+	if(options == null) {
+		options = { };
+	}
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.exists = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.delete = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.listDirectory = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.getBytes = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.saveBytes = function(path,data) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.load = function(path,onLoad,onError) {
+	if(onError == null) {
+		onError = function(_) {
+		};
+	}
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.createDirectory = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.applicationPath = function() {
+	throw new js__$Boot_HaxeError("Not supported");
+};
 var hxd__$FloatBuffer_Float32Expand_$Impl_$ = {};
 $hxClasses["hxd._FloatBuffer.Float32Expand_Impl_"] = hxd__$FloatBuffer_Float32Expand_$Impl_$;
 hxd__$FloatBuffer_Float32Expand_$Impl_$.__name__ = "hxd._FloatBuffer.Float32Expand_Impl_";
@@ -40825,31 +43014,31 @@ hxd_Math.colorLerp = function(c1,c2,k) {
 	return a << 24 | r << 16 | g << 8 | b;
 };
 hxd_Math.angle = function(da) {
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	return da;
 };
 hxd_Math.angleLerp = function(a,b,k) {
 	var da = b - a;
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	return a + da * k;
 };
 hxd_Math.angleMove = function(a,b,max) {
 	var da = b - a;
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	var da1 = da;
 	if(da1 > -max && da1 < max) {
@@ -54990,7 +57179,7 @@ hxsl_Flatten.prototype = {
 				this.allocConsts([0.00392156862745098,0.00392156862745098,0.00392156862745098,0],e.p);
 				break;
 			case 55:
-				this.allocConsts([1,0.00392156862745098,1.5378700499807768e-005,6.0308629411010845e-008],e.p);
+				this.allocConsts([1,0.00392156862745098,1.53787004998077679e-05,6.03086294110108446e-08],e.p);
 				break;
 			case 56:
 				this.allocConst(1,e.p);
@@ -60566,6 +62755,7 @@ var Bool = Boolean;
 var Class = { };
 var Enum = { };
 var __map_reserved = {};
+haxe_Resource.content = [{ name : "map", data : "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDEwMTAxMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDExMTAxMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDEwMTAxMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDIyMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDIyMjAyMjIwMjIwMDIyMjAwMDAwMDAwMDAKMDAwMDAwMDAyMDAyMjAwMDIyMDAyMDAwMDAwMDAwMDAKMDAwMDAwMDAyMDAyMjIwMjIwMDAyMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDMzMzAwMDAwMDAwMDAKMDAwMDAwMDAwMDQwMDAwMDAwMDAwMzAwMDAwMDAwMDAKMDAwMDAwMDAwMDQwMDAwMDAwMDAzMzAwMDAwMDAwMDAKMDAwMDAwMDUwMDQwMDAwMDAwMDAwMzAwMDAwMDAwMDAKMDAwMDAwMDUwMDAwMDAwMDAwMDMzMzAwMDAwMDAwMDAKMDAwMDAwMDUwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAK"}];
 haxe_ds_ObjectMap.count = 0;
 Object.defineProperty(js__$Boot_HaxeError.prototype,"message",{ get : function() {
 	return String(this.val);
@@ -60618,6 +62808,8 @@ format_mp3_CEmphasis.ENone = 0;
 format_mp3_CEmphasis.EMs50_15 = 1;
 format_mp3_CEmphasis.EReserved = 2;
 format_mp3_CEmphasis.ECCIT_J17 = 3;
+h2d_Console.HIDE_LOG_TIMEOUT = 3.;
+h2d_HtmlText.REG_SPACES = new EReg("[\r\n\t ]+","g");
 h2d_RenderContext.BUFFERING = false;
 h2d_col_Matrix.tmp = new h2d_col_Matrix();
 h3d_Buffer.GUID = 0;
