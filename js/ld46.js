@@ -318,8 +318,8 @@ Main.prototype = $extend(hxd_App.prototype,{
 	init: function() {
 		var file = haxe_Resource.getString("map");
 		var background = StringTools.trim(file.toString());
-		haxe_Log.trace(background,{ fileName : "Main.hx", lineNumber : 22, className : "Main", methodName : "init"});
-		haxe_Log.trace("Hello",{ fileName : "Main.hx", lineNumber : 23, className : "Main", methodName : "init"});
+		haxe_Log.trace(background,{ fileName : "src/Main.hx", lineNumber : 22, className : "Main", methodName : "init"});
+		haxe_Log.trace("Hello",{ fileName : "src/Main.hx", lineNumber : 23, className : "Main", methodName : "init"});
 		this.s2d.setFixedSize(512,448);
 		this.layer1 = new TileLayer(this.s2d,32,28);
 		this.layer1.initMap(background);
@@ -368,7 +368,7 @@ TileLayer.prototype = {
 			var _g11 = this.width;
 			while(_g2 < _g11) {
 				var i = _g2++;
-				haxe_Log.trace(m[1],{ fileName : "Main.hx", lineNumber : 77, className : "TileLayer", methodName : "initMap"});
+				haxe_Log.trace(m[1],{ fileName : "src/Main.hx", lineNumber : 77, className : "TileLayer", methodName : "initMap"});
 				var color = 0;
 				switch(m[i]) {
 				case "0":
@@ -841,6 +841,12 @@ Xml.prototype = {
 			throw new js__$Boot_HaxeError("Bad node type, expected Element but found " + _$Xml_XmlType_$Impl_$.toString(this.nodeType));
 		}
 		return this.attributeMap.keys();
+	}
+	,iterator: function() {
+		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) {
+			throw new js__$Boot_HaxeError("Bad node type, expected Element or Document but found " + _$Xml_XmlType_$Impl_$.toString(this.nodeType));
+		}
+		return HxOverrides.iter(this.children);
 	}
 	,elements: function() {
 		if(this.nodeType != Xml.Document && this.nodeType != Xml.Element) {

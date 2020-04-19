@@ -1,6 +1,7 @@
 -lib heaps 
--js ld46.js
--main Main
+--class-path src
+--js js/ld46.js
+--main Main
+--debug
+--resource res/test.jmap@map
 -D windowSize=512x448
--debug
---resource test.jmap@map
